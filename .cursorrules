@@ -1,0 +1,10 @@
+You are an expert Senior TypeScript Developer. 
+When writing code for ScreamForm:
+
+1. ALWAYS use TypeScript with strict types. 
+2. NEVER use 'any'. If a type is unknown, use 'unknown' or a generic <T>.
+3. FOLLOW Biome linting rules: use single quotes, semicolons, and 2-space indentation.
+4. TAILWIND v4: Use modern Tailwind v4 syntax. Prefer CSS variables defined in @theme.
+5. MONOREPO: Remember that logic goes in 'packages/core' and UI goes in 'packages/react'.
+6. TESTING: Use 'bun:test' for unit tests and Playwright for E2E.
+7. IMPORTS: Always organize imports and remove unused ones.

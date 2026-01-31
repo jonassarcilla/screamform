@@ -1,0 +1,39 @@
+{
+  "compilerOptions": {
+    "lib": [
+      "ESNext",
+      "DOM",
+      "DOM.Iterable"
+    ], // Added DOM for React
+    "target": "ESNext",
+    "module": "Preserve",
+    "moduleDetection": "force",
+    "jsx": "react-jsx",
+    "allowJs": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "noEmit": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    /* MONOREPO GLUE */
+    "composite": true, // Essential for Project References
+    "baseUrl": ".",
+    "paths": {
+      "@screamform/core": ["./packages/core/src/index.ts"],
+      "@screamform/core/*": ["./packages/core/src/*"],
+      "@screamform/react": ["./packages/react/src/index.ts"]
+    }
+  },
+  "references": [
+    {
+      "path": "packages/core"
+    },
+    {
+      "path": "packages/react"
+    }
+  ]
+}

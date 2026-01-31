@@ -1,0 +1,35 @@
+version = 1
+
+# Exclude generated files to focus on source security
+exclude_patterns = [
+  "**/node_modules/**",
+  "**/dist/**",
+  "**/*.stories.tsx"
+]
+
+[[analyzers]]
+name = "javascript"
+enabled = true
+  [analyzers.meta]
+  dialect = "typescript"
+  environment = ["nodejs", "browser"]
+  plugins = ["react"]
+
+[[analyzers]]
+# CRITICAL FOR SOC 2: Detects hardcoded passwords, API keys, and tokens
+name = "secrets"
+enabled = true
+
+[[analyzers]]
+# CRITICAL FOR SOC 2: Detects OWASP Top 10 vulnerabilities (XSS, Injection, etc.)
+name = "owasp"
+enabled = true
+
+[[transformers]]
+name = "biome"
+enabled = true
+
+[[analyzers]]
+# Tracks code coverage (Proof that you are testing your security logic)
+name = "test-coverage"
+enabled = true

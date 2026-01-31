@@ -1,0 +1,33 @@
+{
+	"name": "@screamform/core",
+	"version": "0.1.0",
+	"type": "module",
+	"sideEffects": false,
+	"source": "./src/index.ts",
+	"main": "./dist/index.js",
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"files": ["dist"],
+	"scripts": {
+		"build": "bun build ./src/index.ts --outdir ./dist --sourcemap --minify",
+		"test": "bun test --coverage",
+		"test:report": "bun test --coverage --coverage-reporter=lcov",
+		"dev": "bun build ./src/index.ts --outdir ./dist --watch"
+	},
+	"devDependencies": {
+		"@types/bun": "latest"
+	},
+	"peerDependencies": {
+		"typescript": "^5.0.0"
+	},
+	"dependencies": {
+		"typia": "^11.0.3"
+	}
+}

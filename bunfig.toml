@@ -1,0 +1,13 @@
+[test]
+# Always enable coverage reporting
+coverage = true
+preload = ["./setup-tests.ts"]
+
+# Formats needed for both local reading (text) and DeepSource (lcov)
+coverageReporter = ["text", "lcov"]
+
+# SOC 2 usually likes to see at least 80-90% on core logic
+coverageThreshold = 0.8
+
+# Don't include your test files in the coverage percentage (so types.test.ts etc. don't appear in the report)
+coverageSkipTestFiles = true

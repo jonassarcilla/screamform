@@ -1,0 +1,24 @@
+{
+	"extends": "../../tsconfig.json",
+	"compilerOptions": {
+		"rootDir": "./src",
+		"outDir": "./dist",
+		/* 1. Add DOM support (Required for React) */
+		"lib": ["ESNext", "DOM", "DOM.Iterable"],
+		"jsx": "react-jsx",
+		/* 2. Enable Type Generation for exports */
+		"noEmit": false,
+		"declaration": true,
+		"declarationMap": true,
+		"emitDeclarationOnly": true,
+		/* 3. Monorepo Linking */
+		"composite": true
+	},
+	"include": ["src/**/*"],
+	"exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.test.tsx"],
+	"references": [
+		{
+			"path": "../core"
+		}
+	]
+}

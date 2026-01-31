@@ -1,0 +1,29 @@
+{
+	"extends": "../../tsconfig.json",
+	"compilerOptions": {
+		"rootDir": "./src",
+		"outDir": "./dist",
+
+		/* 1. Resolve the conflict */
+		"allowImportingTsExtensions": false, // Set to false because we are emitting files
+		"noEmit": false,
+		"emitDeclarationOnly": false,
+
+		/* 2. Standard Library Settings */
+		"module": "ESNext",
+		"moduleResolution": "Node", // Or "Bundler", but "Node" is safer when emitting
+		"jsx": "preserve",
+
+		"declaration": true,
+		"declarationMap": true,
+		"composite": true,
+
+		"plugins": [
+			{
+				"transform": "typia/lib/transform"
+			}
+		]
+	},
+	"include": ["src/**/*.ts"],
+	"exclude": ["node_modules", "dist", "**/*.test.ts"]
+}

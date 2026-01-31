@@ -1,0 +1,28 @@
+{
+  "name": "screamform-monorepo",
+  "type": "module",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "check": "bunx biome check --write ./packages",
+    "lint": "bunx biome lint ./packages",
+    "format": "bunx biome format --write ./packages",
+    "test": "bun test",
+    "build": "bun run build:core && bun run build:react",
+    "build:core": "cd packages/core && bun run build",
+    "build:react": "cd packages/react && bun run build",
+    "dev": "bun --watch",
+    "typecheck": "bun x tsc --noEmit"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.0",
+    "@types/bun": "latest",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "bun-plugin-typia": "^0.1.0",
+    "expect-type": "^1.3.0",
+    "typescript": "^5.0.0"
+  }
+}

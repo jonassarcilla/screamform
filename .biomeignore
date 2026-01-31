@@ -1,0 +1,5 @@
+node_modules/
+dist/
+bun.lockb
+# Ignore the storybook static build if you add it later
+storybook-static/
