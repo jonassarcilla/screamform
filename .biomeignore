@@ -3,3 +3,8 @@ dist/
 bun.lockb
 # Ignore the storybook static build if you add it later
 storybook-static/
+
+# Exclude tests from linting
+**/tests/
+**/*.test.ts
+**/*.spec.ts

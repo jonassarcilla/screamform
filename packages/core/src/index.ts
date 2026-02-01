@@ -1,15 +1,31 @@
 /**
- * Core package entry: re-exports all public API so coverage sees every source file.
+ * DOMAIN: The Core DNA
+ * Rules, Evaluators, and Validators
  */
-export type {
-	LogicValue,
-	LogicOperator,
-	RuleEffect,
-	TransformKeyword,
-	Condition,
-	LogicGroup,
-	FieldRule,
-	UIPropValue,
-	UISchemaField,
-	UISchema,
-} from './domain/schema/types';
+export * from './domain/schema/types';
+export { evaluateLogic } from './domain/rules/evaluator';
+export { evaluateValidation } from './domain/schema/validator';
+
+/**
+ * TRANSFORMATIONS: Data Preparation
+ */
+export { sanitizeFormData } from './domain/transformation/sanitizer';
+
+/**
+ * USE CASES: The Business Logic
+ * These are the primary entry points for your UI / Hooks
+ */
+export { getFieldState } from './use-cases/get-field-state';
+export { processSubmission } from './use-cases/process-submission';
+export { handleAutoSave } from './use-cases/handle-auto-save';
+export { discardChanges } from './use-cases/discard-changes';
+
+/**
+ * TYPES: Public Contracts
+ */
+export * from './use-cases/types';
+
+/**
+ * UTILS: Helpful constants
+ */
+export const ENGINE_VERSION = '1.0.0';

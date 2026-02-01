@@ -68,7 +68,11 @@ const checkRule = (rule: ValidationRule, value: unknown): boolean => {
 };
 
 const getErrorMessage = (rule: ValidationRule): string => {
-  return rule.errorMessage || DEFAULT_VALIDATION_MESSAGES[rule.type] || "Invalid value";
+	return (
+		rule.errorMessage ||
+		DEFAULT_VALIDATION_MESSAGES[rule.type] ||
+		'Invalid value'
+	);
 };
 
 /**
@@ -76,39 +80,39 @@ const getErrorMessage = (rule: ValidationRule): string => {
  * It returns the errorMessage (string) if it fails, or null if it passes.
  */
 export const evaluateValidation = (
-  node: ValidationGroup | ValidationRule,
-  value: unknown,
+	node: ValidationGroup | ValidationRule,
+	value: unknown,
 ): string | null => {
-  // --- BASE CASE: Single Leaf Rule ---
-  if ('type' in node) {
-    // We pass the rule to checkRule, and if it fails, we fetch the message
-    return checkRule(node, value) ? null : getErrorMessage(node);
-  }
+	// --- BASE CASE: Single Leaf Rule ---
+	if ('type' in node) {
+		// We pass the rule to checkRule, and if it fails, we fetch the message
+		return checkRule(node, value) ? null : getErrorMessage(node);
+	}
 
-  // --- RECURSIVE CASE: Logic Branch (Groups) ---
-  const results = node.rules.map((r) => evaluateValidation(r, value));
+	// --- RECURSIVE CASE: Logic Branch (Groups) ---
+	const results = node.rules.map((r) => evaluateValidation(r, value));
 
-  switch (node.operator) {
-    case 'and':
-      return results.find((res) => res !== null) || null;
+	switch (node.operator) {
+		case 'and':
+			return results.find((res) => res !== null) || null;
 
-    case 'or':
-      const anyValid = results.some((res) => res === null);
-      if (anyValid) return null;
-      
-      // For OR, we try to grab the message from the first failed rule in the group
-      const firstResult = results.find(res => res !== null);
-      return firstResult || "None of the required conditions were met";
+		case 'or': {
+			const anyValid = results.some((res) => res === null);
+			if (anyValid) return null;
+			const firstResult = results.find((res) => res !== null);
+			return firstResult || 'None of the required conditions were met';
+		}
 
-    case 'not':
-      const firstError = results[0];
-      // If there was no error (meaning the check passed), NOT makes it fail.
-      // We use the custom message if provided, else a standard negation message.
-      return firstError !== null ? null : "This value is specifically disallowed";
+		case 'not': {
+			const firstError = results[0];
+			return firstError !== null
+				? null
+				: 'This value is specifically disallowed';
+		}
 
-    default:
-      return null;
-  }
+		default:
+			return null;
+	}
 };
 
 /**

@@ -102,7 +102,7 @@ export interface ValidationRule {
 	/**
 	 * The "Scream": The message displayed to the user when validation fails.
 	 */
-	errorMessage: string;
+	errorMessage?: string;
 }
 
 /**
@@ -132,6 +132,7 @@ export interface UISchemaField {
 	placeholder?: string;
 	description?: string;
 	autoSave?: boolean;
+	bindPath?: string;
 
 	// Transformation Logic
 	transform?: TransformKeyword;
