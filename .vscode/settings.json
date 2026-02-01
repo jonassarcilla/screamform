@@ -28,7 +28,7 @@
     // --- Clean Workspace ---
     "files.exclude": {
         "**/node_modules": true,
-        "**/dist": true,
+        "**/dist": false,
         "**/.turbo": true
     },
     "search.exclude": {

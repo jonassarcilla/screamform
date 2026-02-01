@@ -3,6 +3,12 @@
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./dist",
+		"baseUrl": ".",
+		"paths": {
+			"@/*": ["./src/*"],
+			"@screamform/core": ["../core/src/index.ts"],
+			"@screamform/core/*": ["../core/src/*"]
+		},
 		/* 1. Add DOM support (Required for React) */
 		"lib": ["ESNext", "DOM", "DOM.Iterable"],
 		"jsx": "react-jsx",

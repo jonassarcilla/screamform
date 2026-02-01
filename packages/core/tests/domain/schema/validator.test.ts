@@ -83,6 +83,7 @@ describe('Domain: Validator Engine', () => {
 				errorMessage: 'Too low',
 			};
 			expect(evaluateValidation(minRule, 15)).toBeNull();
+			expect(evaluateValidation(minRule, 10)).toBeNull(); // boundary: value >= rule.value
 			expect(evaluateValidation(minRule, 5)).toBe('Too low');
 			expect(evaluateValidation(minRule, '15')).toBe('Too low');
 			const maxRule: ValidationRule = {
@@ -91,6 +92,7 @@ describe('Domain: Validator Engine', () => {
 				errorMessage: 'Too high',
 			};
 			expect(evaluateValidation(maxRule, 50)).toBeNull();
+			expect(evaluateValidation(maxRule, 100)).toBeNull(); // boundary: value <= rule.value
 			expect(evaluateValidation(maxRule, 150)).toBe('Too high');
 			expect(evaluateValidation(maxRule, '50')).toBe('Too high');
 		});
@@ -106,6 +108,16 @@ describe('Domain: Validator Engine', () => {
 			expect(evaluateValidation(rule, 'poker')).toBeNull();
 			expect(evaluateValidation(rule, 'nope')).toBe('Must contain ok');
 			expect(evaluateValidation(rule, 42)).toBe('Must contain ok');
+		});
+
+		test('contains: string branch uses String(rule.value) for non-string rule.value', () => {
+			const rule: ValidationRule = {
+				type: 'contains',
+				value: 42,
+				errorMessage: 'Must contain 42',
+			};
+			expect(evaluateValidation(rule, 'hello 42 world')).toBeNull();
+			expect(evaluateValidation(rule, 'no number')).toBe('Must contain 42');
 		});
 	});
 
@@ -173,6 +185,24 @@ describe('Domain: Validator Engine', () => {
 			expect(evaluateValidation(group, 'admin-123')).toBe(
 				'This value is specifically disallowed',
 			);
+		});
+
+		test('NOT: firstError is null returns disallow message', () => {
+			const group: ValidationGroup = {
+				operator: 'not',
+				rules: [{ type: 'required', errorMessage: 'Required' }],
+			};
+			expect(evaluateValidation(group, 'filled')).toBe(
+				'This value is specifically disallowed',
+			);
+		});
+
+		test('NOT: firstError is non-null returns null', () => {
+			const group: ValidationGroup = {
+				operator: 'not',
+				rules: [{ type: 'required', errorMessage: 'Required' }],
+			};
+			expect(evaluateValidation(group, '')).toBeNull();
 		});
 
 		test('default: unknown logic group operator returns null', () => {

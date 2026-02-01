@@ -16,6 +16,7 @@ export { sanitizeFormData } from './domain/transformation/sanitizer';
  * These are the primary entry points for your UI / Hooks
  */
 export { getFieldState } from './use-cases/get-field-state';
+export { captureInput } from './use-cases/capture-input';
 export { processSubmission } from './use-cases/process-submission';
 export { handleAutoSave } from './use-cases/handle-auto-save';
 export { discardChanges } from './use-cases/discard-changes';

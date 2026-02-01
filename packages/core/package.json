@@ -16,18 +16,19 @@
 	},
 	"files": ["dist"],
 	"scripts": {
-		"build": "bun build ./src/index.ts --outdir ./dist --sourcemap --minify",
+		"build:js": "bun build ./src/index.ts --outdir ./dist --sourcemap --minify",
+		"build:types": "bunx tsc -p . --emitDeclarationOnly --declaration --outDir dist",
+		"clean": "node scripts/clean-dist.mjs",
+		"build": "bun run clean && bun run build:js && bun run build:types",
+		"dev": "bun build ./src/index.ts --outdir ./dist --watch",
 		"test": "bun test --coverage",
-		"test:report": "bun test --coverage --coverage-reporter=lcov",
-		"dev": "bun build ./src/index.ts --outdir ./dist --watch"
+		"test:report": "bun test --coverage --coverage-reporter=lcov"
 	},
 	"devDependencies": {
-		"@types/bun": "latest"
+		"@types/bun": "latest",
+		"typescript": "^5.0.0"
 	},
 	"peerDependencies": {
 		"typescript": "^5.0.0"
-	},
-	"dependencies": {
-		"typia": "^11.0.3"
 	}
 }

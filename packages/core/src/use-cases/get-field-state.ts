@@ -9,8 +9,8 @@ import type {
 } from '../domain/schema/types';
 import { evaluateValidation } from '../domain/schema/validator';
 import { sanitizeFormData } from '../domain/transformation/sanitizer';
+import { PathResolver } from '../domain/transformation/path-resolver';
 import type { FormState, FieldState } from './types';
-import { PathResolver } from '@screamform/core/domain/transformation/path-resolver';
 
 /**
  * THE ORCHESTRATOR: Respecting RuleEffects and Transformations

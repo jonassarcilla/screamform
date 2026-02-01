@@ -16,13 +16,7 @@
 
 		"declaration": true,
 		"declarationMap": true,
-		"composite": true,
-
-		"plugins": [
-			{
-				"transform": "typia/lib/transform"
-			}
-		]
+		"composite": true
 	},
 	"include": ["src/**/*.ts"],
 	"exclude": ["node_modules", "dist", "**/*.test.ts"]

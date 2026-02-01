@@ -1,4 +1,3 @@
-import typia from 'typia';
 import type {
 	ValidationRule,
 	ValidationGroup,
@@ -7,59 +6,46 @@ import type {
 } from './types';
 import { DEFAULT_VALIDATION_MESSAGES } from '../constants/validation-messages';
 
+const isString = (v: unknown): v is string => typeof v === 'string';
+const isNumber = (v: unknown): v is number => typeof v === 'number';
+
 /**
- * BASE CHECKER: This is where we use Typia to ensure strict types.
- * It returns true (valid) or false (invalid).
+ * BASE CHECKER: Runtime type checks and rule logic.
+ * Returns true (valid) or false (invalid).
  */
 const checkRule = (rule: ValidationRule, value: unknown): boolean => {
 	switch (rule.type) {
 		case 'required':
-			// Value must not be null, undefined, or an empty string
 			return value !== null && value !== undefined && value !== '';
 
 		case 'regex':
-			return (
-				typia.is<string>(value) && new RegExp(rule.value as string).test(value)
-			);
+			return isString(value) && new RegExp(rule.value as string).test(value);
 
 		case 'startsWith':
 			return (
-				typia.is<string>(value) &&
-				typia.is<string>(rule.value) &&
-				value.startsWith(rule.value)
+				isString(value) && isString(rule.value) && value.startsWith(rule.value)
 			);
 
 		case 'endsWith':
 			return (
-				typia.is<string>(value) &&
-				typia.is<string>(rule.value) &&
-				value.endsWith(rule.value)
+				isString(value) && isString(rule.value) && value.endsWith(rule.value)
 			);
 
 		case 'in':
-			// rule.value must be an array for 'in' to work (ValidationRule.value is string[] | number[])
 			return (
 				Array.isArray(rule.value) &&
 				rule.value.includes(value as string | number)
 			);
 
 		case 'min':
-			return (
-				typia.is<number>(value) &&
-				typia.is<number>(rule.value) &&
-				value >= rule.value
-			);
+			return isNumber(value) && isNumber(rule.value) && value >= rule.value;
 
 		case 'max':
-			return (
-				typia.is<number>(value) &&
-				typia.is<number>(rule.value) &&
-				value <= rule.value
-			);
+			return isNumber(value) && isNumber(rule.value) && value <= rule.value;
 
 		case 'contains':
 			if (Array.isArray(value)) return value.includes(rule.value as LogicValue);
-			if (typia.is<string>(value)) return value.includes(String(rule.value));
+			if (isString(value)) return value.includes(String(rule.value));
 			return false;
 
 		default:
