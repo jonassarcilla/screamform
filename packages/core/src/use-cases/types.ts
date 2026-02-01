@@ -8,6 +8,7 @@ export interface FieldState {
 	widget: string;
 	placeholder: string;
 	description?: string;
+	autoSave?: boolean;
 	options?: Array<{ label: string; value: unknown }>;
 	uiProps?: Record<string, unknown>;
 	children?: Record<string, FieldState> | Record<string, FieldState>[];

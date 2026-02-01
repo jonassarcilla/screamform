@@ -1,4 +1,3 @@
-// packages/react/src/components/FieldRenderer.tsx
 import { useForm } from '../providers/FormContext';
 import {
 	DefaultWidgets,
@@ -12,7 +11,8 @@ interface FieldRendererProps {
 }
 
 export function FieldRenderer({ fieldKey }: FieldRendererProps) {
-	const { getField, onChange } = useForm();
+	// 1. Extract onCommit from the updated FormContext
+	const { getField, onChange, onCommit } = useForm();
 	const state = getField(fieldKey);
 
 	if (!state || !state.isVisible) return null;
@@ -23,17 +23,20 @@ export function FieldRenderer({ fieldKey }: FieldRendererProps) {
 
 	return (
 		<Widget
-			label={state.label}
+			// Pass the fieldKey so the widget knows its own identity
+			fieldKey={fieldKey}
+			label={state.label ?? ''}
 			value={state.value as FieldValue}
 			error={state.error}
 			isRequired={state.isRequired}
 			isDisabled={state.isDisabled}
 			placeholder={state.placeholder}
+			autoSave={state.autoSave}
 			testId={
 				(state.uiProps?.testId as string | undefined) || `field-${fieldKey}`
 			}
-			uiProps={state.uiProps as Record<string, unknown>}
-			onChange={(val: FieldValue) => onChange(fieldKey, val)}
+			onChange={(val) => onChange(fieldKey, val)}
+			onCommit={(val) => onCommit(fieldKey, val)}
 		/>
 	);
 }

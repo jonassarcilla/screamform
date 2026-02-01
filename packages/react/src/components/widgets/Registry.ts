@@ -13,13 +13,16 @@ export type FieldValue =
 
 // 1. Define the "Contract" (Props all widgets must follow)
 export interface WidgetProps<T extends FieldValue = FieldValue> {
+	fieldKey: string;
 	value: T;
 	onChange: (val: T) => void;
+	onCommit?: (value: T) => void;
 	label: string;
 	error?: string | null;
 	isRequired?: boolean;
 	isDisabled?: boolean;
 	placeholder?: string;
+	autoSave?: boolean;
 	uiProps?: Record<string, unknown>;
 	testId?: string;
 }
