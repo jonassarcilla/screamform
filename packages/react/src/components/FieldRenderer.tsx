@@ -1,4 +1,4 @@
-import { useForm } from '../providers/FormContext';
+import { useForm } from '@/providers/FormContext';
 import {
 	DefaultWidgets,
 	type WidgetProps,
@@ -11,11 +11,15 @@ interface FieldRendererProps {
 }
 
 export function FieldRenderer({ fieldKey }: FieldRendererProps) {
-	// 1. Extract onCommit from the updated FormContext
-	const { getField, onChange, onCommit } = useForm();
+	// 1. Pull submitErrors from the context
+	const { getField, onChange, onCommit, submitErrors } = useForm();
 	const state = getField(fieldKey);
 
 	if (!state || !state.isVisible) return null;
+
+	// 2. Determine the final error message
+	// Priority: Submission Errors > Real-time Validation Errors
+	const finalError = submitErrors?.[fieldKey] || state.error;
 
 	// Lookup with fallback
 	const Widget = (DefaultWidgets[state.widget] ||
@@ -23,11 +27,11 @@ export function FieldRenderer({ fieldKey }: FieldRendererProps) {
 
 	return (
 		<Widget
-			// Pass the fieldKey so the widget knows its own identity
 			fieldKey={fieldKey}
 			label={state.label ?? ''}
 			value={state.value as FieldValue}
-			error={state.error}
+			// Pass the merged error state
+			error={finalError}
 			isRequired={state.isRequired}
 			isDisabled={state.isDisabled}
 			placeholder={state.placeholder}

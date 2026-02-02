@@ -19,6 +19,8 @@
 		"build": "bun build ./src/index.ts --outdir ./dist --external react --external react-dom --sourcemap",
 		"test": "bun test",
 		"storybook": "storybook dev -p 6006",
+		"storybook:hmr": "storybook dev -p 6006",
+		"storybook:poll": "storybook dev -p 6006",
 		"build-storybook": "storybook build"
 	},
 	"dependencies": {

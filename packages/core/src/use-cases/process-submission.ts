@@ -65,11 +65,11 @@ function extractCleanData(
 			if (Array.isArray(field.children)) {
 				// Handle Array of Objects
 				result[key] = field.children.map((childGroup) =>
-					extractCleanData(childGroup, new Set()),
+					extractCleanData(childGroup, excludeKeys),
 				);
 			} else {
 				// Handle Single Nested Object
-				result[key] = extractCleanData(field.children, new Set());
+				result[key] = extractCleanData(field.children, excludeKeys);
 			}
 		} else {
 			// Leaf node

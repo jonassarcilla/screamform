@@ -7,8 +7,13 @@ interface FormContextType {
 	onCommit: (key: string, value?: unknown) => void;
 	getField: (key: string) => FieldState | undefined;
 
-	formVersion: number; // Add this
-	discardChanges: () => void; // Add this
+	// NEW: Submission Actions
+	submit: (
+		onSave: (data: Record<string, unknown>) => Promise<void>,
+	) => Promise<void>;
+
+	formVersion: number;
+	reset: () => void;
 
 	// History Actions
 	undo: () => void;
@@ -18,6 +23,10 @@ interface FormContextType {
 	canUndo: boolean;
 	canRedo: boolean;
 	isFormDirty: boolean;
+
+	// NEW: Submission State Flags
+	isSubmitting: boolean;
+	submitErrors: Record<string, string> | null;
 }
 
 const FormContext = createContext<FormContextType | null>(null);

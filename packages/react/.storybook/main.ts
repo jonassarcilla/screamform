@@ -18,6 +18,21 @@ const config: StorybookConfig = {
 	framework: '@storybook/react-vite',
 	async viteFinal(config) {
 		config.plugins?.push(tailwindcss());
+		// HMR + file watching so saves trigger hot reload (helps on Windows/WSL)
+		config.server = config.server ?? {};
+		config.server.hmr = true;
+		// Polling ensures file saves are detected (fixes HMR on Windows/WSL)
+		config.server.watch = {
+			...config.server.watch,
+			usePolling: true,
+			interval: 500,
+		};
+		// Don't pre-bundle workspace core so changes there trigger HMR
+		config.optimizeDeps = config.optimizeDeps ?? {};
+		config.optimizeDeps.exclude = [
+			...(config.optimizeDeps.exclude ?? []),
+			'@screamform/core',
+		];
 		config.resolve = config.resolve ?? {};
 		const coreSrc = path.resolve(dirname_, '../../core/src/index.ts');
 		const srcAlias = path.resolve(dirname_, '../src');
