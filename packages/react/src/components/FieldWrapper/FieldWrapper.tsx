@@ -27,18 +27,20 @@ export interface FieldWrapperProps {
 	 */
 	description?: string | null;
 	isDisabled?: boolean;
-	/** Read-only pill: "String" | "Number" | "Boolean" for display only */
+	/** Read-only pill: "String" | "Number" | "Boolean" etc. for display only */
 	dataType?: string;
 	className?: string;
 	/** Input element(s) rendered below the label row */
 	children: ReactNode;
 }
 
-const dataTypeLabel = (dataType?: string): string => {
+function dataTypeLabel(dataType?: string): string {
 	if (dataType === 'number') return 'Number';
 	if (dataType === 'boolean') return 'Boolean';
+	if (dataType === 'date') return 'Date';
+	if (dataType === 'code') return 'Code';
 	return 'String';
-};
+}
 
 export function FieldWrapper({
 	label,
@@ -55,7 +57,6 @@ export function FieldWrapper({
 	children,
 }: FieldWrapperProps) {
 	const showCommitDiscard = !autoSave && isDirty && !isDisabled;
-	const dataTypeDisplay = dataTypeLabel(dataType);
 
 	const [popoverOpen, setPopoverOpen] = useState(false);
 	const [urlContent, setUrlContent] = useState<string | null>(null);
@@ -104,13 +105,37 @@ export function FieldWrapper({
 
 	return (
 		<div className={cn('grid w-full gap-1.5', className)}>
-			{/* Row 1: Label (left) | Info, Discard, Commit, DataType pill (right) */}
+			{/* Row 1: Label (left) | commit, discard, info (right) */}
 			<div className="flex w-full items-center justify-between gap-2">
 				<Label className={cn(error && 'text-destructive')}>
 					{label}{' '}
 					{isRequired && <span className="text-destructive font-bold">*</span>}
 				</Label>
 				<div className="flex shrink-0 items-center gap-0.5">
+					{showCommitDiscard && (
+						<>
+							<Button
+								type="button"
+								size="icon"
+								variant="ghost"
+								onClick={onCommit}
+								className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+								title="Commit change"
+							>
+								<Check className="h-4 w-4" />
+							</Button>
+							<Button
+								type="button"
+								size="icon"
+								variant="ghost"
+								onClick={onDiscard}
+								className="h-8 w-8 text-destructive hover:bg-destructive/10"
+								title="Discard change"
+							>
+								<X className="h-4 w-4" />
+							</Button>
+						</>
+					)}
 					{description != null && description !== '' && (
 						<Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
 							<PopoverTrigger asChild>
@@ -148,38 +173,16 @@ export function FieldWrapper({
 							</PopoverContent>
 						</Popover>
 					)}
-					{showCommitDiscard && (
-						<>
-							<Button
-								type="button"
-								size="icon"
-								variant="ghost"
-								onClick={onDiscard}
-								className="h-8 w-8 text-destructive hover:bg-destructive/10"
-								title="Discard change"
-							>
-								<X className="h-4 w-4" />
-							</Button>
-							<Button
-								type="button"
-								size="icon"
-								variant="ghost"
-								onClick={onCommit}
-								className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
-								title="Commit change"
-							>
-								<Check className="h-4 w-4" />
-							</Button>
-						</>
-					)}
 					<Badge variant="outline" className="font-normal">
-						{dataTypeDisplay}
+						{dataTypeLabel(dataType)}
 					</Badge>
 				</div>
 			</div>
 
-			{/* Row 2: Input (children) */}
-			<div className="relative flex w-full items-center gap-2">{children}</div>
+			{/* Row 2: Input (children); full width so form width is not reduced by icon space */}
+			<div className="relative flex w-full min-w-0 items-center gap-2">
+				{children}
+			</div>
 
 			{/* Row 3: Error */}
 			{error && (

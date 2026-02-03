@@ -1,6 +1,69 @@
 import type { FieldState } from './types';
-import type { UISchema } from '../domain/schema/types';
+import type { UISchema, PrimitiveType } from '../domain/schema/types';
 import { getFieldState } from './get-field-state';
+
+const PRIMITIVE_TYPES: PrimitiveType[] = [
+	'string',
+	'number',
+	'boolean',
+	'date',
+	'code',
+];
+
+function isPrimitiveType(s: string | undefined): s is PrimitiveType {
+	return s !== undefined && PRIMITIVE_TYPES.includes(s as PrimitiveType);
+}
+
+/**
+ * Default dataType when schema does not set field.dataType.
+ * Aligns with sanitizer/capture-input widget coercion.
+ */
+function getDefaultDataTypeForWidget(widget: string): PrimitiveType {
+	switch (widget) {
+		case 'number-input':
+		case 'number':
+		case 'slider':
+			return 'number';
+		case 'checkbox':
+		case 'switch':
+			return 'boolean';
+		case 'date':
+		case 'date-picker':
+			return 'date';
+		default:
+			return 'string';
+	}
+}
+
+/**
+ * Cast a leaf value to the expected primitive for the payload.
+ * Empty string / NaN for number → 0 (match sanitizer). code → string.
+ */
+function castValueByDataType(value: unknown, dataType: PrimitiveType): unknown {
+	if (value === null || value === undefined) {
+		return value;
+	}
+	// Arrays/objects (multi-select, tags, etc.) are not cast by primitive type
+	if (Array.isArray(value) || (typeof value === 'object' && value !== null)) {
+		return value;
+	}
+	switch (dataType) {
+		case 'number': {
+			const n =
+				typeof value === 'string' ? Number.parseFloat(value) : Number(value);
+			return Number.isNaN(n) ? 0 : n;
+		}
+		case 'boolean':
+			return Boolean(value);
+		case 'date':
+			return typeof value === 'string' ? value : String(value);
+		case 'string':
+		case 'code':
+			return String(value);
+		default:
+			return String(value);
+	}
+}
 
 /**
  * The final payload contract.
@@ -18,9 +81,10 @@ export interface SubmissionResult {
 export const processSubmission = (
 	schema: UISchema,
 	rawData: Record<string, unknown>,
+	configData: Record<string, unknown> = {},
 ): SubmissionResult => {
 	// 1. Get the current state (Visibility + Validation)
-	const state = getFieldState(schema, rawData);
+	const state = getFieldState(schema, rawData, configData);
 
 	// 2. Failure Path: Collect errors only from visible fields
 	if (!state.isValid) {
@@ -72,8 +136,11 @@ function extractCleanData(
 				result[key] = extractCleanData(field.children, excludeKeys);
 			}
 		} else {
-			// Leaf node
-			result[key] = field.value;
+			// Leaf node: cast by dataType (explicit or widget default)
+			const effectiveDataType: PrimitiveType = isPrimitiveType(field.dataType)
+				? field.dataType
+				: getDefaultDataTypeForWidget(field.widget);
+			result[key] = castValueByDataType(field.value, effectiveDataType);
 		}
 	}
 

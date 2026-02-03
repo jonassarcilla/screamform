@@ -308,4 +308,103 @@ describe('Use Case: getFieldState', () => {
 		expect(state.fields.name?.isRequired).toBe(true);
 		expect(state.fields.name?.error).toBe('Required');
 	});
+
+	test('widget date uses default dataType date when dataType not set', () => {
+		const schema: UISchema = {
+			fields: {
+				birthday: { label: 'Birthday', widget: 'date' },
+			},
+		};
+		const state = getFieldState(schema, { birthday: '2024-01-15' });
+		expect(state.fields.birthday?.dataType).toBe('date');
+	});
+
+	test('widget date-picker uses default dataType date when dataType not set', () => {
+		const schema: UISchema = {
+			fields: {
+				start: { label: 'Start', widget: 'date-picker' },
+			},
+		};
+		const state = getFieldState(schema, { start: '2024-06-01' });
+		expect(state.fields.start?.dataType).toBe('date');
+	});
+
+	test('configData supplies value when rawData has null/undefined for field', () => {
+		const schema: UISchema = {
+			fields: {
+				bound: { label: 'Bound', widget: 'text', bindPath: 'bound' },
+			},
+		};
+		const state = getFieldState(schema, {}, { bound: 'from-config' });
+		expect(state.fields.bound?.value).toBe('from-config');
+	});
+
+	test('field.defaultValue is used when value is null/undefined and no configValue', () => {
+		const schema: UISchema = {
+			fields: {
+				username: {
+					label: 'Username',
+					widget: 'text',
+					defaultValue: 'guest',
+				},
+			},
+		};
+		const state = getFieldState(schema, {});
+		expect(state.fields.username?.value).toBe('guest');
+	});
+
+	test('widget number uses default dataType number when dataType not set', () => {
+		const schema: UISchema = {
+			fields: {
+				score: { label: 'Score', widget: 'number' },
+			},
+		};
+		const state = getFieldState(schema, { score: 10 });
+		expect(state.fields.score?.dataType).toBe('number');
+	});
+
+	test('widget slider uses default dataType number when dataType not set', () => {
+		const schema: UISchema = {
+			fields: {
+				vol: { label: 'Volume', widget: 'slider' },
+			},
+		};
+		const state = getFieldState(schema, { vol: 50 });
+		expect(state.fields.vol?.dataType).toBe('number');
+	});
+
+	test('value starting with = sets dataType to code', () => {
+		const schema: UISchema = {
+			fields: {
+				formula: { label: 'Formula', widget: 'text' },
+			},
+		};
+		const state = getFieldState(schema, { formula: '=A1+B1' });
+		expect(state.fields.formula?.dataType).toBe('code');
+		expect(state.fields.formula?.value).toBe('=A1+B1');
+	});
+
+	test('accepts options.isDebug for logger', () => {
+		const schema: UISchema = {
+			fields: { x: { label: 'X', widget: 'text' } },
+		};
+		const state = getFieldState(schema, { x: 'y' }, {}, { isDebug: true });
+		expect(state.fields.x?.value).toBe('y');
+	});
+
+	test('logger.debug runs with visibleWithError when isDebug true and there are visible errors', () => {
+		const schema: UISchema = {
+			fields: {
+				name: {
+					label: 'Name',
+					widget: 'text',
+					validation: { type: 'required', errorMessage: 'Name is required' },
+				},
+			},
+		};
+		const state = getFieldState(schema, { name: '' }, {}, { isDebug: true });
+		expect(state.fields.name?.isVisible).toBe(true);
+		expect(state.fields.name?.error).toBe('Name is required');
+		expect(state.isValid).toBe(false);
+	});
 });

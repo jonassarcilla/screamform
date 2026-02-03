@@ -14,22 +14,51 @@ import { sanitizeFormData } from '../domain/transformation/sanitizer';
 import { PathResolver } from '../domain/transformation/path-resolver';
 import type { FormState, FieldState } from './types';
 
+/** Default dataType when schema does not set field.dataType. Aligns with process-submission/sanitizer. */
+function getDefaultDataTypeForWidget(widget: string): PrimitiveType {
+	switch (widget) {
+		case 'number-input':
+		case 'number':
+		case 'slider':
+			return 'number';
+		case 'checkbox':
+		case 'switch':
+			return 'boolean';
+		case 'date':
+		case 'date-picker':
+			return 'date';
+		default:
+			return 'string';
+	}
+}
+
 export const getFieldState = (
 	schema: UISchema,
 	rawData: Record<string, unknown>,
 	configData: Record<string, unknown> = {},
 	options?: { isDebug?: boolean },
 ): FormState => {
-	const logger = createLogger({ isDebug: !!options?.isDebug });
+	const logger = createLogger({
+		isDebug: !!options?.isDebug,
+		prefix: 'getFieldState',
+	});
 	const cleanData = sanitizeFormData(schema, rawData);
 
 	const fields = processFields(schema.fields, cleanData, configData);
 
+	const isValid = !Object.values(fields).some(
+		(f) => f.isVisible && f.error !== null,
+	);
+	logger.debug('computed state', {
+		fieldCount: Object.keys(fields).length,
+		isValid,
+		visibleWithError: Object.entries(fields)
+			.filter(([, f]) => f.isVisible && f.error !== null)
+			.map(([k, f]) => ({ key: k, error: f.error })),
+	});
 	return {
 		fields,
-		isValid: !Object.values(fields).some(
-			(f) => f.isVisible && f.error !== null,
-		),
+		isValid,
 		data: cleanData,
 	};
 };
@@ -80,7 +109,8 @@ function processFields(
 		}
 
 		// 3. 🟢 TYPE DETECTION & PREFIX LOGIC (The "Excel" Feature)
-		let dataType: PrimitiveType = field.dataType || 'string';
+		let dataType: PrimitiveType =
+			field.dataType ?? getDefaultDataTypeForWidget(field.widget);
 		if (typeof value === 'string' && value.startsWith('=')) {
 			dataType = 'code';
 		}
