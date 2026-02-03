@@ -159,3 +159,50 @@ export const WithMultiSelect: Story = {
 		},
 	},
 };
+
+export const WithDescriptions: Story = {
+	name: 'With Descriptions',
+	args: {
+		schema: {
+			fields: {
+				title: {
+					widget: 'text',
+					label: 'Project Title',
+					description:
+						'A short, memorable name for the project. Used in the header and breadcrumbs.',
+					validation: {
+						type: 'required',
+						errorMessage: 'Project title is required',
+					},
+				},
+				budget: {
+					widget: 'number',
+					label: 'Budget Limit',
+					description:
+						'<p>Maximum spend for this project in <strong>USD</strong>. Use <code>0</code> for no limit.</p>',
+				},
+				status: {
+					widget: 'select',
+					label: 'Status',
+					placeholder: 'Choose status...',
+					description:
+						'<p>Workflow state:</p><ul><li><strong>Draft</strong> — not yet submitted</li><li><strong>In Review</strong> — under review</li><li><strong>Published</strong> — live</li></ul>',
+					options: [
+						{ label: 'Draft', value: 'draft' },
+						{ label: 'In Review', value: 'in_review' },
+						{ label: 'Published', value: 'published' },
+					],
+				},
+			},
+		},
+		dataConfig: {
+			title: 'Q1 Campaign',
+			budget: 50000,
+			status: 'draft',
+		},
+		onSave: async (data) => {
+			await new Promise((r) => setTimeout(r, 500));
+			console.log('Saved:', data);
+		},
+	},
+};

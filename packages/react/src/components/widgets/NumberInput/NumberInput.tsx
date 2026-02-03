@@ -1,8 +1,6 @@
 import { useId, useState, useEffect, useRef } from 'react';
-import { Check, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
+import { FieldWrapper } from '@/components/FieldWrapper';
 import { cn } from '@/lib/utils';
 
 import type { WidgetProps } from '../Registry';
@@ -16,6 +14,8 @@ export function NumberInput({
 	isDisabled,
 	placeholder,
 	autoSave = true,
+	description,
+	dataType,
 	uiProps,
 	testId,
 	onCommit,
@@ -81,65 +81,33 @@ export function NumberInput({
 	};
 
 	return (
-		<div
-			className={cn(
-				'grid w-full items-center gap-1.5',
-				uiProps?.className as string | undefined,
-			)}
+		<FieldWrapper
+			className={cn(uiProps?.className as string | undefined)}
+			label={label ?? ''}
+			isRequired={isRequired}
+			error={error}
+			autoSave={autoSave}
+			isDirty={isDirty}
+			onCommit={handleCommit}
+			onDiscard={handleDiscard}
+			description={description}
+			isDisabled={isDisabled}
+			dataType={dataType}
 		>
-			<Label htmlFor={id} className={cn(error && 'text-destructive')}>
-				{label}{' '}
-				{isRequired && <span className="text-destructive font-bold">*</span>}
-			</Label>
-
-			<div className="relative flex items-center gap-2">
-				<Input
-					id={id}
-					type="number"
-					data-testid={testId}
-					value={draft}
-					disabled={isDisabled}
-					placeholder={placeholder}
-					step={(uiProps?.step as string | number | undefined) ?? '1'}
-					onChange={handleChange}
-					className={cn(
-						'transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none',
-						error && 'border-destructive focus-visible:ring-destructive',
-						!autoSave && isDirty && 'pr-20',
-					)}
-				/>
-
-				{!autoSave && isDirty && !isDisabled && (
-					<div className="absolute right-1 flex items-center gap-0.5 animate-in fade-in slide-in-from-right-1 duration-200">
-						<Button
-							type="button"
-							size="icon"
-							variant="ghost"
-							onClick={handleCommit}
-							className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
-							title="Commit change"
-						>
-							<Check className="h-4 w-4" />
-						</Button>
-						<Button
-							type="button"
-							size="icon"
-							variant="ghost"
-							onClick={handleDiscard}
-							className="h-8 w-8 text-destructive hover:bg-destructive/10"
-							title="Discard change"
-						>
-							<X className="h-4 w-4" />
-						</Button>
-					</div>
+			<Input
+				id={id}
+				type="number"
+				data-testid={testId}
+				value={draft}
+				disabled={isDisabled}
+				placeholder={placeholder}
+				step={(uiProps?.step as string | number | undefined) ?? '1'}
+				onChange={handleChange}
+				className={cn(
+					'transition-colors w-full min-w-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none',
+					error && 'border-destructive focus-visible:ring-destructive',
 				)}
-			</div>
-
-			{error && (
-				<p className="text-[0.8rem] font-medium text-destructive animate-in fade-in duration-200">
-					{error}
-				</p>
-			)}
-		</div>
+			/>
+		</FieldWrapper>
 	);
 }

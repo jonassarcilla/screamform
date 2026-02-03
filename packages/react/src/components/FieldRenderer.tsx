@@ -1,9 +1,6 @@
 import { useForm } from '@/providers/FormContext';
-import {
-	DefaultWidgets,
-	type WidgetProps,
-	type FieldValue,
-} from './widgets/Registry';
+import { DefaultWidgets, type WidgetProps } from './widgets/Registry';
+import type { LogicValue } from '@screamform/core';
 import type { ComponentType } from 'react';
 
 interface FieldRendererProps {
@@ -28,18 +25,21 @@ export function FieldRenderer({ fieldKey }: FieldRendererProps) {
 
 	// Lookup with fallback (use widgetKey so multi-select override is applied)
 	const Widget = (DefaultWidgets[widgetKey] ||
-		DefaultWidgets.text) as ComponentType<WidgetProps<FieldValue>>;
+		DefaultWidgets.text) as ComponentType<WidgetProps>;
 
 	return (
 		<Widget
 			fieldKey={fieldKey}
 			label={state.label ?? ''}
-			value={state.value as FieldValue}
+			value={state.value}
 			error={finalError}
 			isRequired={state.isRequired}
 			isDisabled={state.isDisabled}
+			isVisible={state.isVisible}
+			widget={widgetKey}
 			placeholder={state.placeholder}
 			autoSave={state.autoSave}
+			description={state.description}
 			options={state.options}
 			multiple={state.multiple}
 			maxItems={state.maxItems}
@@ -47,8 +47,8 @@ export function FieldRenderer({ fieldKey }: FieldRendererProps) {
 			testId={
 				(state.uiProps?.testId as string | undefined) || `field-${fieldKey}`
 			}
-			onChange={(val) => onChange(fieldKey, val)}
-			onCommit={(val) => onCommit(fieldKey, val)}
+			onChange={(val: LogicValue) => onChange(fieldKey, val)}
+			onCommit={(val: LogicValue) => onCommit(fieldKey, val)}
 		/>
 	);
 }
