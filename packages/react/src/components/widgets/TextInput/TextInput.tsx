@@ -21,10 +21,10 @@ export function TextInput({
 	uiProps,
 	testId,
 	onCommit,
-}: WidgetProps<string>) {
+}: WidgetProps) {
 	const { formVersion, getField } = useForm();
 	const id = useId();
-	const field = getField(fieldKey);
+	const field = fieldKey != null ? getField(fieldKey) : undefined;
 
 	// Local draft for uncommitted changes
 	const [draft, setDraft] = useState<string>(

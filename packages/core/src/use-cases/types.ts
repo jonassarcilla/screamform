@@ -9,6 +9,9 @@ export interface FieldState {
 	placeholder: string;
 	description?: string;
 	autoSave?: boolean;
+	multiple?: boolean;
+	dataType?: string;
+	maxItems?: number;
 	options?: Array<{ label: string; value: unknown }>;
 	uiProps?: Record<string, unknown>;
 	children?: Record<string, FieldState> | Record<string, FieldState>[];

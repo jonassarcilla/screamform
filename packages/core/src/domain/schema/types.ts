@@ -1,27 +1,30 @@
 /**
- * Supported primitive types for data and logic comparison
+ * Primitive types for data identity and UI rendering.
+ * 'code' is triggered dynamically when a value starts with '='.
  */
-export type LogicValue = string | number | boolean | null | undefined;
+export type PrimitiveType = 'string' | 'number' | 'boolean' | 'date' | 'code';
 
 /**
- * Logical operators for grouping conditions
+ * Supported values for logic and form state.
  */
+export type LogicValue =
+	| string
+	| number
+	| boolean
+	| null
+	| undefined
+	| LogicValue[];
+
 export type LogicOperator = 'and' | 'or' | 'not';
 
-/**
- * Behavioral effects triggered by logic
- */
 export type RuleEffect =
 	| 'SHOW'
 	| 'HIDE'
 	| 'DISABLE'
 	| 'ENABLE'
-	| 'REQUIRE' // Field becomes mandatory
-	| 'OPTIONAL'; // Field becomes optional
+	| 'REQUIRE'
+	| 'OPTIONAL';
 
-/**
- * Data transformation keywords for the "Exit-Gate"
- */
 export type TransformKeyword =
 	| 'unix'
 	| 'number'
@@ -32,8 +35,15 @@ export type TransformKeyword =
 	| 'lowercase';
 
 /**
- * The Leaf Node: A single comparison unit
+ * Select Option structure for dropdowns and radio groups.
  */
+export interface SelectOption {
+	label: string;
+	value: LogicValue;
+}
+
+// --- Logic & Validation Structures ---
+
 export interface Condition {
 	field: string;
 	operator:
@@ -51,37 +61,16 @@ export interface Condition {
 	value?: LogicValue | LogicValue[];
 }
 
-/**
- * The Branch Node: Recursive logic grouping (Boolean Algebra)
- */
 export interface LogicGroup {
 	operator: LogicOperator;
 	conditions: Array<Condition | LogicGroup>;
 }
 
-/**
- * The Command: Maps a trigger to a UI effect
- */
 export interface FieldRule {
 	effect: RuleEffect;
 	condition: LogicGroup | Condition;
 }
 
-/**
- * Primitive types that can safely be passed to UI components
- */
-export type UIPropValue =
-	| string
-	| number
-	| boolean
-	| null
-	| undefined
-	| UIPropValue[]
-	| { [key: string]: UIPropValue };
-
-/**
- * Leaf node: The actual check to perform.
- */
 export interface ValidationRule {
 	type:
 		| 'required'
@@ -92,70 +81,62 @@ export interface ValidationRule {
 		| 'startsWith'
 		| 'endsWith'
 		| 'in';
-
-	/**
-	 * The value to compare against.
-	 * For 'in', this is an array: string[] | number[].
-	 */
 	value?: string | number | boolean | Array<string | number>;
-
-	/**
-	 * The "Scream": The message displayed to the user when validation fails.
-	 */
 	errorMessage?: string;
 }
 
-/**
- * Branch node: Orchestrates multiple rules using logic.
- */
 export interface ValidationGroup {
-	/**
-	 * 'and': All rules must pass.
-	 * 'or': At least one rule must pass.
-	 * 'not': Negates the first rule in the array.
-	 */
 	operator: 'and' | 'or' | 'not';
-
-	/**
-	 * Can contain more groups (recursion) or specific rules (leaves).
-	 */
 	rules: Array<ValidationGroup | ValidationRule>;
 }
 
+// --- Schema & State ---
+
+export type UIPropValue =
+	| string
+	| number
+	| boolean
+	| null
+	| undefined
+	| UIPropValue[]
+	| { [key: string]: UIPropValue };
+
 /**
- * The Field Definition: The core blueprint of an input
+ * The Field Definition (The JSON Blueprint).
  */
 export interface UISchemaField {
 	label: string;
-	widget: string; // e.g., 'text', 'select', 'checkbox'
+	widget: string;
+	dataType?: PrimitiveType; // 🟢 Explicit type enforcement
 	defaultValue?: LogicValue;
 	placeholder?: string;
 	description?: string;
 	autoSave?: boolean;
 	bindPath?: string;
+	multiple?: boolean;
 
-	// Transformation Logic
 	transform?: TransformKeyword;
-	template?: string; // e.g., "{{user.firstName}} {{user.lastName}}"
+	template?: string;
 
-	// Behavioral Logic
 	rules?: FieldRule | FieldRule[];
-
 	validation?: ValidationGroup | ValidationRule;
 
-	// Nested/Array Support
 	itemSchema?: Record<string, UISchemaField>;
 
-	// Extra UI configuration
-	options?: Array<{ label: string; value: LogicValue }>;
-	uiProps?: Record<string, UIPropValue>;
+	options?: SelectOption[];
+
+	/**
+	 * Extra UI configurations.
+	 * Constraints like maxItems live here in the schema.
+	 */
+	uiProps?: {
+		maxItems?: number;
+		[key: string]: UIPropValue;
+	};
 }
 
-/**
- * The Root Schema: The entry point for the engine
- */
 export interface UISchema {
-	exclude?: string[]; // Keys to strip before final mapping
+	exclude?: string[];
 	fields: Record<string, UISchemaField>;
 	settings?: {
 		debug?: boolean;

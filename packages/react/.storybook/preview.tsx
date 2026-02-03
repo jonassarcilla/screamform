@@ -1,3 +1,4 @@
+import React from 'react';
 import type { Preview } from '@storybook/react';
 import '../src/styles/global.css';
 
@@ -10,14 +11,15 @@ const preview: Preview = {
 				date: /Date$/i,
 			},
 		},
-
-		a11y: {
-			// 'todo' - show a11y violations in the test UI only
-			// 'error' - fail CI on a11y violations
-			// 'off' - skip a11y checks entirely
-			test: 'todo',
-		},
 	},
+	// 🟢 Add this decorator to ensure a clean rendering context
+	decorators: [
+		(Story) => (
+			<div className="w-[400px] min-h-[400px] p-4 font-sans text-foreground antialiased">
+				<Story />
+			</div>
+		),
+	],
 };
 
 export default preview;

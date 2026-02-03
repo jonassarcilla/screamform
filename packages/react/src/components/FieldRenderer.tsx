@@ -21,8 +21,13 @@ export function FieldRenderer({ fieldKey }: FieldRendererProps) {
 	// Priority: Submission Errors > Real-time Validation Errors
 	const finalError = submitErrors?.[fieldKey] || state.error;
 
-	// Lookup with fallback
-	const Widget = (DefaultWidgets[state.widget] ||
+	let widgetKey = state.widget;
+	if (widgetKey === 'select' && state.multiple) {
+		widgetKey = 'multi-select';
+	}
+
+	// Lookup with fallback (use widgetKey so multi-select override is applied)
+	const Widget = (DefaultWidgets[widgetKey] ||
 		DefaultWidgets.text) as ComponentType<WidgetProps<FieldValue>>;
 
 	return (
@@ -30,12 +35,15 @@ export function FieldRenderer({ fieldKey }: FieldRendererProps) {
 			fieldKey={fieldKey}
 			label={state.label ?? ''}
 			value={state.value as FieldValue}
-			// Pass the merged error state
 			error={finalError}
 			isRequired={state.isRequired}
 			isDisabled={state.isDisabled}
 			placeholder={state.placeholder}
 			autoSave={state.autoSave}
+			options={state.options}
+			multiple={state.multiple}
+			maxItems={state.maxItems}
+			dataType={state.dataType}
 			testId={
 				(state.uiProps?.testId as string | undefined) || `field-${fieldKey}`
 			}

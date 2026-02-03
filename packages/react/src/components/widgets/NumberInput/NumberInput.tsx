@@ -19,7 +19,7 @@ export function NumberInput({
 	uiProps,
 	testId,
 	onCommit,
-}: WidgetProps<number | undefined | null>) {
+}: WidgetProps) {
 	const id = useId();
 
 	// 1. Local draft as string to handle typing and empty states safely

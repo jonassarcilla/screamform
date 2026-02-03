@@ -1,41 +1,35 @@
 import type { ComponentType } from 'react';
 import { TextInput } from './TextInput';
 import { NumberInput } from './NumberInput';
+import { SelectInput } from './SelectInput';
+import type { FieldState, LogicValue } from '@screamform/core';
 
-export type FieldValue =
-	| string
-	| number
-	| boolean
-	| string[]
-	| number[]
-	| null
-	| undefined;
-
-// 1. Define the "Contract" (Props all widgets must follow)
-export interface WidgetProps<T extends FieldValue = FieldValue> {
-	fieldKey: string;
-	value: T;
-	onChange: (val: T) => void;
-	onCommit?: (value: T) => void;
-	label: string;
-	error?: string | null;
-	isRequired?: boolean;
-	isDisabled?: boolean;
-	placeholder?: string;
+/**
+ * The "Contract": All widgets receive the full FieldState
+ * plus the functional triggers from the React layer.
+ */
+export interface WidgetProps extends FieldState {
+	fieldKey?: string;
+	onChange: (val: LogicValue) => void;
+	onCommit?: (val: LogicValue) => void;
 	autoSave?: boolean;
-	uiProps?: Record<string, unknown>;
 	testId?: string;
 }
 
-// We use a helper type to ensure the Registry components are compatible with WidgetProps
-export type WidgetRegistry = Record<
-	string,
-	ComponentType<WidgetProps<FieldValue>>
->;
+/**
+ * Ensures the Registry components are strictly compatible with WidgetProps.
+ * We avoid 'any' here to maintain strong type safety across the package.
+ */
+export type WidgetRegistry = Record<string, ComponentType<WidgetProps>>;
 
-// 2. Map the keys to the actual Components
+/**
+ * 2. Map the keys to the actual Components.
+ * The keys here should match the 'widget' string in your JSON schema.
+ */
 export const DefaultWidgets: WidgetRegistry = {
-	text: TextInput as ComponentType<WidgetProps<FieldValue>>,
-	number: NumberInput as ComponentType<WidgetProps<FieldValue>>,
-	// email: TextInput, // You can alias multiple keys to one component
+	text: TextInput as ComponentType<WidgetProps>,
+	number: NumberInput as ComponentType<WidgetProps>,
+	select: SelectInput as ComponentType<WidgetProps>,
+	'multi-select': SelectInput as ComponentType<WidgetProps>,
+	// switch: BooleanInput as ComponentType<WidgetProps>,
 };

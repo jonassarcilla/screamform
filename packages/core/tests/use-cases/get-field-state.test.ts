@@ -231,6 +231,29 @@ describe('Use Case: getFieldState', () => {
 		expect(address?.children).toBeDefined();
 	});
 
+	test('itemSchema array with non-object item uses empty object for that slot', () => {
+		const schema: UISchema = {
+			fields: {
+				items: {
+					label: 'Items',
+					widget: 'object',
+					itemSchema: {
+						name: { label: 'Name', widget: 'text' },
+					},
+				},
+			},
+		};
+		const rawData = { items: [{ name: 'OK' }, null, 42] };
+		const state = getFieldState(schema, rawData);
+		const items = state.fields.items;
+		expect(items?.children).toBeDefined();
+		const arr = items?.children as Record<string, { value: unknown }>[];
+		expect(arr).toHaveLength(3);
+		expect(arr[0]?.name?.value).toBe('OK');
+		expect(arr[1]).toBeDefined();
+		expect(arr[2]).toBeDefined();
+	});
+
 	test('multiple rules as array are all evaluated', () => {
 		const schema: UISchema = {
 			fields: {

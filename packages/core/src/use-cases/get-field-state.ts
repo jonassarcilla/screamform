@@ -6,15 +6,14 @@ import type {
 	ValidationGroup,
 	ValidationRule,
 	UISchemaField,
+	PrimitiveType,
+	LogicValue,
 } from '../domain/schema/types';
 import { evaluateValidation } from '../domain/schema/validator';
 import { sanitizeFormData } from '../domain/transformation/sanitizer';
 import { PathResolver } from '../domain/transformation/path-resolver';
 import type { FormState, FieldState } from './types';
 
-/**
- * THE ORCHESTRATOR: Respecting RuleEffects and Transformations
- */
 export const getFieldState = (
 	schema: UISchema,
 	rawData: Record<string, unknown>,
@@ -22,31 +21,19 @@ export const getFieldState = (
 	options?: { isDebug?: boolean },
 ): FormState => {
 	const logger = createLogger({ isDebug: !!options?.isDebug });
-	logger.debug('Processing Form State', { rawData, configData });
-
 	const cleanData = sanitizeFormData(schema, rawData);
 
-	// We extract the core field processing into a reusable function
 	const fields = processFields(schema.fields, cleanData, configData);
 
-	const state = {
+	return {
 		fields,
 		isValid: !Object.values(fields).some(
 			(f) => f.isVisible && f.error !== null,
 		),
 		data: cleanData,
 	};
-
-	if (!state.isValid) {
-		logger.warn('Form state is currently invalid', state.fields);
-	}
-
-	return state;
 };
 
-/**
- * Maps schema fields to their UI state, handling recursion for itemSchema
- */
 function processFields(
 	fields: Record<string, UISchemaField>,
 	workingData: Record<string, unknown>,
@@ -55,9 +42,9 @@ function processFields(
 	const stateMap: Record<string, FieldState> = {};
 
 	for (const [key, field] of Object.entries(fields)) {
-		// Logic evaluation usually happens against the current working state
 		const effects = calculateEffects(field.rules, workingData);
 
+		// 1. Visibility & Basic Logic
 		const hasShowRule = (
 			Array.isArray(field.rules)
 				? field.rules
@@ -66,12 +53,7 @@ function processFields(
 					: []
 		).some((r) => r.effect === 'SHOW');
 
-		const isVisible = hasShowRule
-			? effects.has('SHOW')
-			: effects.has('HIDE')
-				? false
-				: true;
-
+		const isVisible = hasShowRule ? effects.has('SHOW') : !effects.has('HIDE');
 		const isDisabled = !!effects.has('DISABLE');
 		const isRequired = effects.has('REQUIRE')
 			? true
@@ -79,37 +61,52 @@ function processFields(
 				? false
 				: checkIsRequired(field.validation);
 
-		// --- DATA CONFIG & PATH BINDING START ---
-
-		// 1. Check if user is currently typing this field (Flat Key)
-		let value = workingData[key];
-
+		// 2. Value Resolution
+		let value: LogicValue = workingData[key] as LogicValue;
 		if (value === null || value === undefined) {
-			// 2. If not typing, try to reach into dataConfig using bindPath or key
 			const path = field.bindPath || key;
-			const configValue = PathResolver.get(configData, path);
-
-			// 3. If no config value, use schema defaultValue or widget fallback
+			const configValue = PathResolver.get(configData, path) as LogicValue;
 			value =
 				configValue !== undefined
 					? configValue
 					: (field.defaultValue ?? getFallbackValue(field.widget));
 		}
 
-		// --- DATA CONFIG & PATH BINDING END ---
+		if (field.template && typeof value === 'string') {
+			value = resolveTemplate(
+				field.template,
+				workingData as Record<string, unknown>,
+			);
+		}
 
-		if (field.template) value = resolveTemplate(field.template, workingData);
+		// 3. 🟢 TYPE DETECTION & PREFIX LOGIC (The "Excel" Feature)
+		let dataType: PrimitiveType = field.dataType || 'string';
+		if (typeof value === 'string' && value.startsWith('=')) {
+			dataType = 'code';
+		}
 
-		// Recursion for nested schemas
+		// 4. 🟢 UI PROPS & CONSTRAINT FLATTENING
+		const uiProps = field.uiProps || {};
+		const maxItems = uiProps.maxItems;
+
+		// 5. itemSchema recursion (nested / array children)
 		let children:
 			| Record<string, FieldState>
 			| Record<string, FieldState>[]
-			| undefined = undefined;
+			| undefined;
 		if (field.itemSchema) {
 			const itemSchema = field.itemSchema;
 			if (Array.isArray(value)) {
 				children = value.map((itemData) =>
-					processFields(itemSchema, itemData, {}),
+					processFields(
+						itemSchema,
+						(itemData &&
+						typeof itemData === 'object' &&
+						!Array.isArray(itemData)
+							? itemData
+							: {}) as Record<string, unknown>,
+						{},
+					),
 				);
 			} else {
 				const nested =
@@ -120,7 +117,7 @@ function processFields(
 			}
 		}
 
-		// Validation logic
+		// 6. Validation logic
 		let error: string | null = null;
 		if (isVisible && !isDisabled) {
 			const isEmpty = value === null || value === undefined || value === '';
@@ -141,44 +138,38 @@ function processFields(
 			isRequired,
 			label: field.label,
 			widget: field.widget,
-			placeholder: field.placeholder || '',
+			placeholder: field.placeholder ?? '',
 			description: field.description,
+			dataType,
+			multiple: !!field.multiple,
 			options: field.options || [],
-			uiProps: field.uiProps || {},
-			children,
+			maxItems,
+			uiProps,
+			...(children !== undefined && { children }),
 		};
 	}
 
 	return stateMap;
 }
 
-/**
- * Ensures your UI components always receive a controlled value.
- */
-function getFallbackValue(widget: string): unknown {
-	const fallbacks: Record<string, unknown> = {
+function getFallbackValue(widget: string): LogicValue {
+	const fallbacks: Record<string, LogicValue> = {
 		checkbox: false,
 		switch: false,
 		'multi-select': [],
 		tags: [],
 		number: 0,
 		slider: 0,
-		object: {},
 	};
-	// Default to empty string for text, select, date, etc.
 	return fallbacks[widget] ?? '';
 }
 
-/**
- * Reduces multiple rules into a Set of active effects
- */
 function calculateEffects(
 	rules: FieldRule | FieldRule[] | undefined,
 	data: Record<string, unknown>,
 ): Set<string> {
 	const activeEffects = new Set<string>();
 	if (!rules) return activeEffects;
-
 	const ruleArray = Array.isArray(rules) ? rules : [rules];
 	for (const rule of ruleArray) {
 		if (evaluateLogic(rule.condition, data)) {
@@ -188,9 +179,6 @@ function calculateEffects(
 	return activeEffects;
 }
 
-/**
- * Resolves {{dot.notation}} templates
- */
 function resolveTemplate(
 	template: string,
 	data: Record<string, unknown>,
@@ -211,9 +199,6 @@ function resolveTemplate(
 	});
 }
 
-/**
- * Deep search for 'required' type in Validation tree
- */
 function checkIsRequired(
 	rule: ValidationGroup | ValidationRule | undefined,
 ): boolean {
