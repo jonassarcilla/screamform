@@ -27,8 +27,10 @@ export interface FieldWrapperProps {
 	 */
 	description?: string | null;
 	isDisabled?: boolean;
-	/** Read-only pill: "String" | "Number" | "Boolean" etc. for display only */
+	/** Default (first) data type for display/casting */
 	dataType?: string;
+	/** All allowed types when multiple; first is default. Pill shows e.g. "String | Number". */
+	dataTypes?: string[];
 	className?: string;
 	/** Input element(s) rendered below the label row */
 	children: ReactNode;
@@ -42,6 +44,13 @@ function dataTypeLabel(dataType?: string): string {
 	return 'String';
 }
 
+function dataTypePillLabel(dataType?: string, dataTypes?: string[]): string {
+	if (dataTypes != null && dataTypes.length > 0) {
+		return dataTypes.map(dataTypeLabel).join(' | ');
+	}
+	return dataTypeLabel(dataType);
+}
+
 export function FieldWrapper({
 	label,
 	isRequired,
@@ -53,6 +62,7 @@ export function FieldWrapper({
 	description,
 	isDisabled,
 	dataType,
+	dataTypes,
 	className,
 	children,
 }: FieldWrapperProps) {
@@ -174,7 +184,7 @@ export function FieldWrapper({
 						</Popover>
 					)}
 					<Badge variant="outline" className="font-normal">
-						{dataTypeLabel(dataType)}
+						{dataTypePillLabel(dataType, dataTypes)}
 					</Badge>
 				</div>
 			</div>

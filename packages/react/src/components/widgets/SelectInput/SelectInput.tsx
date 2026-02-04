@@ -11,9 +11,25 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
+import {
+	Command,
+	CommandEmpty,
+	CommandInput,
+	CommandItem,
+	CommandList,
+} from '@/components/ui/command';
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from '@/components/ui/popover';
+import { Input } from '@/components/ui/input';
 import type { WidgetProps } from '../Registry';
 import type { LogicValue } from '@screamform/core';
 import { useForm } from '@/providers/FormContext';
+
+/** Single-select only: when options are empty and required, inject this option and use as default */
+const EMPTY_REQUIRED_OPTION = { label: 'None', value: 'none' } as const;
 
 export function SelectInput({
 	fieldKey,
@@ -31,10 +47,20 @@ export function SelectInput({
 	multiple,
 	maxItems,
 	dataType,
+	dataTypes,
+	searchable = false,
+	disabledOptions = [],
 }: WidgetProps) {
 	const { formVersion, getField } = useForm();
 	const [multiOpen, setMultiOpen] = useState(false);
 	const multiRef = useRef<HTMLDivElement>(null);
+	const [multiSearchQuery, setMultiSearchQuery] = useState('');
+	const [singleComboboxOpen, setSingleComboboxOpen] = useState(false);
+
+	const disabledSet = useMemo(
+		() => new Set((disabledOptions ?? []).map((v) => String(v))),
+		[disabledOptions],
+	);
 
 	// Draft state for autoSave: false (single: string, multi: unknown[])
 	const [draftSingle, setDraftSingle] = useState<string>(() =>
@@ -54,6 +80,10 @@ export function SelectInput({
 		};
 		document.addEventListener('mousedown', close);
 		return () => document.removeEventListener('mousedown', close);
+	}, [multiOpen]);
+
+	useEffect(() => {
+		if (!multiOpen) setMultiSearchQuery('');
 	}, [multiOpen]);
 
 	const normalizedSingle = value == null ? '' : String(value);
@@ -92,6 +122,18 @@ export function SelectInput({
 		}
 		setLastCommitted(null);
 	}, [formVersion, fieldKey, multiple]);
+
+	// Single-select only: when options are empty and required, default value to 'none' so validation passes
+	useEffect(() => {
+		if (
+			multiple ||
+			(options ?? []).length > 0 ||
+			!isRequired ||
+			(value != null && value !== '')
+		)
+			return;
+		onChange('none' as LogicValue);
+	}, [multiple, options?.length, isRequired, value, onChange]);
 
 	const isDirtySingle =
 		!autoSave &&
@@ -175,6 +217,15 @@ export function SelectInput({
 				: []
 			: draftMulti;
 		const optionList = options ?? [];
+		const query = searchable ? multiSearchQuery.trim().toLowerCase() : '';
+		const filteredOptions =
+			searchable && query
+				? optionList.filter(
+						(opt) =>
+							opt.label.toLowerCase().includes(query) ||
+							String(opt.value).toLowerCase().includes(query),
+					)
+				: optionList;
 		const multiLabel =
 			maxItems != null ? `${label} (${multiValues.length}/${maxItems})` : label;
 
@@ -190,6 +241,7 @@ export function SelectInput({
 				description={description}
 				isDisabled={isDisabled}
 				dataType={dataType}
+				dataTypes={dataTypes}
 			>
 				<div ref={multiRef} className="relative min-w-0 flex-1">
 					<Button
@@ -244,45 +296,71 @@ export function SelectInput({
 					</Button>
 					{multiOpen && (
 						<div
-							className="absolute left-0 right-0 top-full z-50 mt-1 max-h-[300px] overflow-y-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
+							className="absolute left-0 right-0 top-full z-50 mt-1 flex max-h-[300px] flex-col overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md"
 							role="listbox"
 						>
-							{optionList.length === 0 ? (
-								<div className="py-4 text-center text-sm text-muted-foreground">
-									No options
+							{searchable && (
+								<div className="border-b p-1">
+									<Input
+										type="text"
+										placeholder="Search..."
+										value={multiSearchQuery}
+										onChange={(e) => setMultiSearchQuery(e.target.value)}
+										onKeyDown={(e) => e.stopPropagation()}
+										className="h-8"
+										aria-label="Filter options"
+									/>
 								</div>
-							) : (
-								optionList.map((opt) => {
-									const isSelected = multiValues.some(
-										(v) => String(v) === String(opt.value),
-									);
-									return (
-										<button
-											key={String(opt.value)}
-											type="button"
-											role="option"
-											aria-selected={isSelected}
-											className={cn(
-												'flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-2 text-left text-sm outline-none hover:bg-accent hover:text-accent-foreground',
-												isSelected && 'bg-accent',
-											)}
-											onClick={() => handleToggleMultiple(opt.value)}
-										>
-											<div
-												className={cn(
-													'flex h-4 w-4 shrink-0 items-center justify-center rounded border',
-													isSelected
-														? 'bg-primary text-primary-foreground'
-														: 'opacity-50',
-												)}
-											>
-												{isSelected && <Check className="h-3 w-3" />}
-											</div>
-											{opt.label}
-										</button>
-									);
-								})
 							)}
+							<div className="flex-1 overflow-y-auto p-1">
+								{optionList.length === 0 ? (
+									<div className="py-4 text-center text-sm text-muted-foreground">
+										No options
+									</div>
+								) : filteredOptions.length === 0 ? (
+									<div className="py-4 text-center text-sm text-muted-foreground">
+										No results
+									</div>
+								) : (
+									filteredOptions.map((opt) => {
+										const isSelected = multiValues.some(
+											(v) => String(v) === String(opt.value),
+										);
+										const isDisabled = disabledSet.has(String(opt.value));
+										return (
+											<button
+												key={String(opt.value)}
+												type="button"
+												role="option"
+												aria-selected={isSelected}
+												aria-disabled={isDisabled}
+												disabled={isDisabled}
+												className={cn(
+													'flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-2 text-left text-sm outline-none hover:bg-accent hover:text-accent-foreground',
+													isSelected && 'bg-accent',
+													isDisabled &&
+														'cursor-not-allowed opacity-50 pointer-events-none',
+												)}
+												onClick={() =>
+													!isDisabled && handleToggleMultiple(opt.value)
+												}
+											>
+												<div
+													className={cn(
+														'flex h-4 w-4 shrink-0 items-center justify-center rounded border',
+														isSelected
+															? 'bg-primary text-primary-foreground'
+															: 'opacity-50',
+													)}
+												>
+													{isSelected && <Check className="h-3 w-3" />}
+												</div>
+												{opt.label}
+											</button>
+										);
+									})
+								)}
+							</div>
 						</div>
 					)}
 				</div>
@@ -291,11 +369,123 @@ export function SelectInput({
 	}
 
 	// --- RENDER SINGLE MODE ---
-	const singleDisplayValue = autoSave
+	// When options are empty and required, show "None" option and default to "none" (single-select only)
+	const singleSelectOptions =
+		(options ?? []).length === 0 && isRequired
+			? [EMPTY_REQUIRED_OPTION]
+			: (options ?? []);
+
+	const singleDisplayValueRaw = autoSave
 		? safeValue
 			? String(safeValue)
 			: undefined
 		: draftSingle || undefined;
+	// When we injected "None" and there is no value, treat as "none" so required validation passes
+	const singleDisplayValue =
+		singleSelectOptions.length === 1 &&
+		singleSelectOptions[0]?.value === 'none' &&
+		(singleDisplayValueRaw === undefined ||
+			singleDisplayValueRaw === null ||
+			singleDisplayValueRaw === '')
+			? 'none'
+			: (singleDisplayValueRaw ?? undefined);
+
+	const singleDisplayLabel =
+		singleDisplayValue != null && singleDisplayValue !== ''
+			? (singleSelectOptions.find(
+					(o) => String(o.value) === String(singleDisplayValue),
+				)?.label ?? String(singleDisplayValue))
+			: null;
+
+	// Single-select with search: Combobox (Popover + Command)
+	if (searchable) {
+		return (
+			<FieldWrapper
+				label={label ?? ''}
+				isRequired={isRequired}
+				error={error}
+				autoSave={autoSave}
+				isDirty={isDirtySingle}
+				onCommit={handleCommitSingle}
+				onDiscard={handleDiscardSingle}
+				description={description}
+				isDisabled={isDisabled}
+				dataType={dataType}
+				dataTypes={dataTypes}
+			>
+				<div className="relative min-w-0 flex-1">
+					<Popover
+						open={singleComboboxOpen}
+						onOpenChange={setSingleComboboxOpen}
+					>
+						<PopoverTrigger asChild>
+							<Button
+								type="button"
+								variant="outline"
+								disabled={isDisabled}
+								className={cn(
+									'w-full justify-between font-normal',
+									error && 'border-destructive',
+								)}
+								aria-expanded={singleComboboxOpen}
+								aria-haspopup="listbox"
+							>
+								<span
+									className={
+										singleDisplayLabel ? 'truncate' : 'text-muted-foreground'
+									}
+								>
+									{singleDisplayLabel ?? placeholder}
+								</span>
+								<ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+							</Button>
+						</PopoverTrigger>
+						<PopoverContent
+							className="w-(--radix-popover-trigger-width) p-0"
+							align="start"
+							sideOffset={0}
+						>
+							<Command>
+								<CommandInput
+									placeholder="Search..."
+									aria-label="Search options"
+								/>
+								<CommandList>
+									<CommandEmpty>No results.</CommandEmpty>
+									{singleSelectOptions.map((opt) => {
+										const isDisabled = disabledSet.has(String(opt.value));
+										return (
+											<CommandItem
+												key={String(opt.value)}
+												value={`${opt.label} ${String(opt.value)}`}
+												disabled={isDisabled}
+												onSelect={() => {
+													if (isDisabled) return;
+													const final = castValue(opt.value);
+													if (autoSave) {
+														onChange(final);
+														onCommit?.(final);
+													} else {
+														setDraftSingle(String(opt.value));
+														onChange(final);
+													}
+													setSingleComboboxOpen(false);
+												}}
+											>
+												{opt.label}
+											</CommandItem>
+										);
+									})}
+								</CommandList>
+							</Command>
+						</PopoverContent>
+					</Popover>
+				</div>
+			</FieldWrapper>
+		);
+	}
+
+	// Single-select without search: Radix Select
 	return (
 		<FieldWrapper
 			label={label ?? ''}
@@ -308,6 +498,7 @@ export function SelectInput({
 			description={description}
 			isDisabled={isDisabled}
 			dataType={dataType}
+			dataTypes={dataTypes}
 		>
 			<div className="relative min-w-0 flex-1">
 				<Select
@@ -339,8 +530,12 @@ export function SelectInput({
 						sideOffset={0}
 						className="z-100 bg-popover border shadow-md"
 					>
-						{(options ?? []).map((opt) => (
-							<SelectItem key={String(opt.value)} value={String(opt.value)}>
+						{singleSelectOptions.map((opt) => (
+							<SelectItem
+								key={String(opt.value)}
+								value={String(opt.value)}
+								disabled={disabledSet.has(String(opt.value))}
+							>
 								{opt.label}
 							</SelectItem>
 						))}

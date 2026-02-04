@@ -1,5 +1,5 @@
 import { createContext, useContext, type ReactNode } from 'react';
-import type { FieldState } from '@screamform/core';
+import type { FieldState, UISchemaField } from '@screamform/core';
 
 interface FormContextType {
 	// Core Actions
@@ -27,6 +27,15 @@ interface FormContextType {
 	// NEW: Submission State Flags
 	isSubmitting: boolean;
 	submitErrors: Record<string, string> | null;
+
+	/** Dynamic options for select fields keyed by uiProps.optionsKey (e.g. availableRoles) */
+	externalData?: Record<string, Array<{ label: string; value: unknown }>>;
+
+	/** Update a field's schema (e.g. uiProps). Merges uiProps when provided. */
+	updateFieldSchema?: (
+		fieldKey: string,
+		updates: Partial<UISchemaField>,
+	) => void;
 }
 
 const FormContext = createContext<FormContextType | null>(null);

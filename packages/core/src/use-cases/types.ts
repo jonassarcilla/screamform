@@ -10,7 +10,10 @@ export interface FieldState {
 	description?: string;
 	autoSave?: boolean;
 	multiple?: boolean;
+	/** Default (first) data type for casting */
 	dataType?: string;
+	/** All allowed data types when schema has multiple; first matches dataType */
+	dataTypes?: string[];
 	maxItems?: number;
 	options?: Array<{ label: string; value: unknown }>;
 	uiProps?: Record<string, unknown>;

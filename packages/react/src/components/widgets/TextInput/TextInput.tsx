@@ -18,6 +18,7 @@ export function TextInput({
 	autoSave = true,
 	description,
 	dataType,
+	dataTypes,
 	uiProps,
 	testId,
 	onCommit,
@@ -97,6 +98,7 @@ export function TextInput({
 			description={description}
 			isDisabled={isDisabled}
 			dataType={dataType}
+			dataTypes={dataTypes}
 		>
 			<Input
 				id={id}

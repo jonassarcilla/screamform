@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { FormContainer } from './FormContainer';
+import { useForm } from '@/providers/FormContext';
 
 const meta: Meta<typeof FormContainer> = {
 	title: 'Components/FormContainer',
@@ -199,6 +200,297 @@ export const WithDescriptions: Story = {
 			title: 'Q1 Campaign',
 			budget: 50000,
 			status: 'draft',
+		},
+		onSave: async (data) => {
+			await new Promise((r) => setTimeout(r, 500));
+			console.log('Saved:', data);
+		},
+	},
+};
+
+/** Single-select, required, empty options: shows "None" option and defaults value to "none". */
+export const RequiredSelectEmptyOptions: Story = {
+	name: 'Required Select (Empty Options)',
+	args: {
+		schema: {
+			fields: {
+				name: {
+					widget: 'text',
+					label: 'Name',
+					validation: { type: 'required', errorMessage: 'Name is required' },
+				},
+				category: {
+					widget: 'select',
+					label: 'Category',
+					placeholder: 'Select...',
+					options: [],
+					validation: {
+						type: 'required',
+						errorMessage: 'Category is required',
+					},
+				},
+			},
+		},
+		dataConfig: {
+			name: '',
+			category: undefined,
+		},
+		onSave: async (data) => {
+			await new Promise((r) => setTimeout(r, 500));
+			console.log('Saved:', data);
+		},
+	},
+};
+
+/** Single-select with uiProps.searchable: true — search/filter options by typing. */
+export const SearchableSingleSelect: Story = {
+	name: 'Searchable Single Select',
+	args: {
+		schema: {
+			fields: {
+				country: {
+					widget: 'select',
+					label: 'Country',
+					placeholder: 'Search or choose...',
+					uiProps: { searchable: true },
+					options: [
+						{ label: 'United States', value: 'us' },
+						{ label: 'United Kingdom', value: 'uk' },
+						{ label: 'Canada', value: 'ca' },
+						{ label: 'Australia', value: 'au' },
+						{ label: 'Germany', value: 'de' },
+						{ label: 'France', value: 'fr' },
+						{ label: 'Japan', value: 'jp' },
+						{ label: 'Brazil', value: 'br' },
+						{ label: 'India', value: 'in' },
+						{ label: 'Spain', value: 'es' },
+					],
+				},
+			},
+		},
+		dataConfig: { country: undefined },
+		onSave: async (data) => {
+			await new Promise((r) => setTimeout(r, 500));
+			console.log('Saved:', data);
+		},
+	},
+};
+
+/** Multi-select with uiProps.searchable: true — filter options by typing in dropdown. */
+export const SearchableMultiSelect: Story = {
+	name: 'Searchable Multi Select',
+	args: {
+		schema: {
+			fields: {
+				skills: {
+					widget: 'select',
+					label: 'Skills',
+					multiple: true,
+					placeholder: 'Search and pick skills...',
+					uiProps: { searchable: true, maxItems: 5 },
+					options: [
+						{ label: 'JavaScript', value: 'js' },
+						{ label: 'TypeScript', value: 'ts' },
+						{ label: 'React', value: 'react' },
+						{ label: 'Vue', value: 'vue' },
+						{ label: 'Node.js', value: 'node' },
+						{ label: 'Python', value: 'python' },
+						{ label: 'Rust', value: 'rust' },
+						{ label: 'Go', value: 'go' },
+						{ label: 'SQL', value: 'sql' },
+						{ label: 'GraphQL', value: 'graphql' },
+					],
+				},
+			},
+		},
+		dataConfig: { skills: [] },
+		onSave: async (data) => {
+			await new Promise((r) => setTimeout(r, 500));
+			console.log('Saved:', data);
+		},
+	},
+};
+
+/** Single- and multi-select with uiProps.excludeOptions and uiProps.disabledOptions. */
+export const ExcludeAndDisabledOptions: Story = {
+	name: 'Exclude and Disabled Options',
+	args: {
+		schema: {
+			fields: {
+				status: {
+					widget: 'select',
+					label: 'Status',
+					placeholder: 'Choose status...',
+					uiProps: {
+						excludeOptions: ['archived'],
+						disabledOptions: ['legacy'],
+					},
+					options: [
+						{ label: 'Draft', value: 'draft' },
+						{ label: 'In Review', value: 'in_review' },
+						{ label: 'Published', value: 'published' },
+						{ label: 'Archived', value: 'archived' },
+						{ label: 'Legacy', value: 'legacy' },
+					],
+				},
+				tags: {
+					widget: 'select',
+					label: 'Tags',
+					multiple: true,
+					placeholder: 'Pick tags...',
+					uiProps: {
+						maxItems: 5,
+						excludeOptions: ['deprecated'],
+						disabledOptions: ['readonly'],
+					},
+					options: [
+						{ label: 'React', value: 'react' },
+						{ label: 'TypeScript', value: 'typescript' },
+						{ label: 'Form', value: 'form' },
+						{ label: 'Deprecated', value: 'deprecated' },
+						{ label: 'Read-only', value: 'readonly' },
+					],
+				},
+			},
+		},
+		dataConfig: { status: undefined, tags: [] },
+		onSave: async (data) => {
+			await new Promise((r) => setTimeout(r, 500));
+			console.log('Saved:', data);
+		},
+	},
+};
+
+/** Demonstrates updateFieldSchema: buttons dynamically set excludeOptions on the Status field. */
+function UpdateSchemaDemo() {
+	const { updateFieldSchema } = useForm();
+	return (
+		<div className="flex flex-wrap items-center gap-2 rounded-md border border-dashed border-muted-foreground/30 bg-muted/30 px-3 py-2 text-sm">
+			<span className="font-medium text-muted-foreground">
+				updateFieldSchema:
+			</span>
+			<button
+				type="button"
+				onClick={() =>
+					updateFieldSchema?.('status', {
+						uiProps: { excludeOptions: ['archived'] },
+					})
+				}
+				className="rounded bg-primary px-2 py-1 text-primary-foreground hover:opacity-90"
+			>
+				Exclude &quot;Archived&quot;
+			</button>
+			<button
+				type="button"
+				onClick={() =>
+					updateFieldSchema?.('status', {
+						uiProps: { excludeOptions: ['archived', 'legacy'] },
+					})
+				}
+				className="rounded bg-primary px-2 py-1 text-primary-foreground hover:opacity-90"
+			>
+				Exclude &quot;Archived&quot; + &quot;Legacy&quot;
+			</button>
+			<button
+				type="button"
+				onClick={() =>
+					updateFieldSchema?.('status', {
+						uiProps: { excludeOptions: [] },
+					})
+				}
+				className="rounded border border-input bg-background px-2 py-1 hover:bg-accent"
+			>
+				Reset exclusions
+			</button>
+		</div>
+	);
+}
+
+export const UpdateFieldSchema: Story = {
+	name: 'Update Field Schema (excludeOptions)',
+	args: {
+		schema: {
+			fields: {
+				title: {
+					widget: 'text',
+					label: 'Project Title',
+					validation: {
+						type: 'required',
+						errorMessage: 'Project title is required',
+					},
+				},
+				status: {
+					widget: 'select',
+					label: 'Status',
+					placeholder: 'Choose status...',
+					options: [
+						{ label: 'Draft', value: 'draft' },
+						{ label: 'In Review', value: 'in_review' },
+						{ label: 'Published', value: 'published' },
+						{ label: 'Archived', value: 'archived' },
+						{ label: 'Legacy', value: 'legacy' },
+					],
+				},
+			},
+		},
+		dataConfig: { title: '', status: undefined },
+		onSave: async (data) => {
+			await new Promise((r) => setTimeout(r, 500));
+			console.log('Saved:', data);
+		},
+	},
+	render: (args) => (
+		<FormContainer {...args}>
+			<UpdateSchemaDemo />
+		</FormContainer>
+	),
+};
+
+/** Select options populated from externalData via uiProps.optionsKey. */
+export const DynamicOptionsFromExternalData: Story = {
+	name: 'Dynamic Options (externalData)',
+	args: {
+		schema: {
+			fields: {
+				title: {
+					widget: 'text',
+					label: 'Project Title',
+					validation: {
+						type: 'required',
+						errorMessage: 'Project title is required',
+					},
+				},
+				role: {
+					widget: 'select',
+					label: 'Role',
+					placeholder: 'Choose role...',
+					uiProps: { optionsKey: 'availableRoles' },
+				},
+				tags: {
+					widget: 'select',
+					label: 'Tags',
+					multiple: true,
+					placeholder: 'Pick tags...',
+					uiProps: { maxItems: 5, optionsKey: 'availableTags' },
+				},
+			},
+		},
+		dataConfig: {
+			title: '',
+			role: undefined,
+			tags: [],
+		},
+		externalData: {
+			availableRoles: [
+				{ label: 'Admin', value: '1' },
+				{ label: 'Editor', value: '2' },
+				{ label: 'Viewer', value: '3' },
+			],
+			availableTags: [
+				{ label: 'React', value: 'react' },
+				{ label: 'TypeScript', value: 'typescript' },
+				{ label: 'Form', value: 'form' },
+			],
 		},
 		onSave: async (data) => {
 			await new Promise((r) => setTimeout(r, 500));

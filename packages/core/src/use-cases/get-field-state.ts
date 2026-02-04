@@ -109,11 +109,17 @@ function processFields(
 		}
 
 		// 3. 🟢 TYPE DETECTION & PREFIX LOGIC (The "Excel" Feature)
+		const schemaDataType = Array.isArray(field.dataType)
+			? field.dataType[0]
+			: field.dataType;
 		let dataType: PrimitiveType =
-			field.dataType ?? getDefaultDataTypeForWidget(field.widget);
+			schemaDataType ?? getDefaultDataTypeForWidget(field.widget);
 		if (typeof value === 'string' && value.startsWith('=')) {
 			dataType = 'code';
 		}
+		const dataTypes = Array.isArray(field.dataType)
+			? (field.dataType as string[])
+			: undefined;
 
 		// 4. 🟢 UI PROPS & CONSTRAINT FLATTENING
 		const uiProps = field.uiProps || {};
@@ -171,6 +177,7 @@ function processFields(
 			placeholder: field.placeholder ?? '',
 			description: field.description,
 			dataType,
+			...(dataTypes !== undefined && { dataTypes }),
 			multiple: !!field.multiple,
 			options: field.options || [],
 			maxItems,

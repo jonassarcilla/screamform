@@ -16,6 +16,7 @@ export function NumberInput({
 	autoSave = true,
 	description,
 	dataType,
+	dataTypes,
 	uiProps,
 	testId,
 	onCommit,
@@ -93,6 +94,7 @@ export function NumberInput({
 			description={description}
 			isDisabled={isDisabled}
 			dataType={dataType}
+			dataTypes={dataTypes}
 		>
 			<Input
 				id={id}

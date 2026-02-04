@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, type ReactNode } from 'react';
 import { Check } from 'lucide-react'; // Using Lucide for the success icon
 import type { UISchema } from '@screamform/core';
 import { useFormEngine } from '../../hooks/use-form-engine';
@@ -9,15 +9,21 @@ import { HistoryToolbar } from '@/components/HistoryToolbar/HistoryToolbar';
 interface FormContainerProps {
 	schema: UISchema;
 	dataConfig?: Record<string, unknown>;
+	/** Dynamic options for select fields keyed by uiProps.optionsKey (e.g. availableRoles) */
+	externalData?: Record<string, Array<{ label: string; value: unknown }>>;
 	isDebug?: boolean;
 	onSave?: (data: Record<string, unknown>) => Promise<void>;
+	/** Rendered inside FormProvider (e.g. toolbar that uses useForm().updateFieldSchema) */
+	children?: ReactNode;
 }
 
 export function FormContainer({
 	schema,
 	dataConfig,
+	externalData,
 	isDebug,
 	onSave = async (data) => console.log('Default Save (No-op):', data), // Default handler
+	children,
 }: FormContainerProps) {
 	const engine = useFormEngine(schema, dataConfig, { isDebug });
 	const [showSuccess, setShowSuccess] = useState(false);
@@ -67,8 +73,9 @@ export function FormContainer({
 			...engine, // Spreading engine for brevity, ensuring hasFormChanges is included
 			getField: (key: string) => engine.fields[key],
 			onCommit: engine.commit,
+			externalData,
 		}),
-		[engine],
+		[engine, externalData],
 	);
 
 	// Save enabled when handler exists, there are changes vs last save, and no uncommitted edits
@@ -95,6 +102,8 @@ export function FormContainer({
 						{engine.submitErrors._form}
 					</div>
 				)}
+
+				{children}
 
 				<div className="space-y-4">
 					{Object.keys(schema.fields).map((key) => (

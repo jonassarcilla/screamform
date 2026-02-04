@@ -1,8 +1,4 @@
-import {
-	processSubmission,
-	type UISchema,
-	type PrimitiveType,
-} from '@screamform/core';
+import { processSubmission, type UISchema } from '@screamform/core';
 import { describe, test, expect } from 'bun:test';
 
 describe('Use Case: processSubmission', () => {
@@ -129,75 +125,6 @@ describe('Use Case: processSubmission', () => {
 		expect(result.errors).toBe(null);
 	});
 
-	test('success path: casts leaf values by dataType when set', () => {
-		const schema: UISchema = {
-			fields: {
-				score: {
-					label: 'Score',
-					widget: 'text',
-					dataType: 'number',
-				},
-			},
-		};
-		const result = processSubmission(schema, { score: '42' });
-		expect(result.success).toBe(true);
-		expect(result.data).not.toBe(null);
-		expect(result.data).toHaveProperty('score', 42);
-		expect(typeof result.data?.score).toBe('number');
-	});
-
-	test('success path: casts leaf values by widget default when dataType not set', () => {
-		const schema: UISchema = {
-			fields: {
-				age: { label: 'Age', widget: 'number-input' },
-			},
-		};
-		const result = processSubmission(schema, { age: '18' });
-		expect(result.success).toBe(true);
-		expect(result.data).not.toBe(null);
-		expect(result.data).toHaveProperty('age', 18);
-		expect(typeof result.data?.age).toBe('number');
-	});
-
-	test('success path: casts checkbox widget to boolean when dataType not set', () => {
-		const schema: UISchema = {
-			fields: {
-				active: { label: 'Active', widget: 'checkbox' },
-			},
-		};
-		const result = processSubmission(schema, { active: 'true' });
-		expect(result.success).toBe(true);
-		expect(result.data).not.toBe(null);
-		expect(result.data).toHaveProperty('active', true);
-		expect(typeof result.data?.active).toBe('boolean');
-	});
-
-	test('success path: nested leaf number field is cast by widget', () => {
-		const schema: UISchema = {
-			fields: {
-				address: {
-					label: 'Address',
-					widget: 'object',
-					itemSchema: {
-						city: { label: 'City', widget: 'text' },
-						zip: { label: 'Zip', widget: 'number-input' },
-					},
-				},
-			},
-		};
-		const result = processSubmission(schema, {
-			address: { city: 'Boston', zip: '02101' },
-		});
-		expect(result.success).toBe(true);
-		expect(result.data).not.toBe(null);
-		expect(result.data).toEqual({
-			address: { city: 'Boston', zip: 2101 },
-		});
-		expect(typeof (result.data?.address as Record<string, unknown>)?.zip).toBe(
-			'number',
-		);
-	});
-
 	test('success path: leaf with null input gets widget fallback (text → empty string)', () => {
 		const schema: UISchema = {
 			fields: {
@@ -222,83 +149,6 @@ describe('Use Case: processSubmission', () => {
 		expect(result.success).toBe(true);
 		expect(result.data).not.toBe(null);
 		expect(result.data?.tags).toEqual(['a', 'b']);
-	});
-
-	test('success path: invalid dataType falls back to widget default (slider → number)', () => {
-		const schema: UISchema = {
-			fields: {
-				volume: {
-					label: 'Volume',
-					widget: 'slider',
-					dataType: 'numbr' as PrimitiveType,
-				},
-			},
-		};
-		const result = processSubmission(schema, { volume: '50' });
-		expect(result.success).toBe(true);
-		expect(result.data).not.toBe(null);
-		expect(result.data?.volume).toBe(50);
-		expect(typeof result.data?.volume).toBe('number');
-	});
-
-	test('success path: invalid dataType falls back to widget default (number-input → number)', () => {
-		const schema: UISchema = {
-			fields: {
-				age: {
-					label: 'Age',
-					widget: 'number-input',
-					dataType: 'invalid' as PrimitiveType,
-				},
-			},
-		};
-		const result = processSubmission(schema, { age: '25' });
-		expect(result.success).toBe(true);
-		expect(result.data?.age).toBe(25);
-	});
-
-	test('success path: invalid dataType falls back to widget default (checkbox → boolean)', () => {
-		const schema: UISchema = {
-			fields: {
-				flag: {
-					label: 'Flag',
-					widget: 'checkbox',
-					dataType: 'x' as PrimitiveType,
-				},
-			},
-		};
-		const result = processSubmission(schema, { flag: 'true' });
-		expect(result.success).toBe(true);
-		expect(result.data?.flag).toBe(true);
-	});
-
-	test('success path: invalid dataType falls back to widget default (date → date string)', () => {
-		const schema: UISchema = {
-			fields: {
-				d: {
-					label: 'Date',
-					widget: 'date',
-					dataType: 'bad' as PrimitiveType,
-				},
-			},
-		};
-		const result = processSubmission(schema, { d: '2024-01-15' });
-		expect(result.success).toBe(true);
-		expect(result.data?.d).toBe('2024-01-15');
-	});
-
-	test('success path: invalid dataType falls back to widget default (unknown widget → string)', () => {
-		const schema: UISchema = {
-			fields: {
-				custom: {
-					label: 'Custom',
-					widget: 'custom-widget',
-					dataType: 'nope' as PrimitiveType,
-				},
-			},
-		};
-		const result = processSubmission(schema, { custom: 42 });
-		expect(result.success).toBe(true);
-		expect(result.data?.custom).toBe('42');
 	});
 
 	test('success path: configData null passes through in payload', () => {

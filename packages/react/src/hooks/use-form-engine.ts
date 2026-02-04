@@ -1,19 +1,26 @@
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import {
 	getFieldState,
 	captureInput,
 	processSubmission,
 	type UISchema,
+	type UISchemaField,
 	type FieldState,
 } from '@screamform/core';
 
 type FormDataRecord = Record<string, unknown>;
 
 export function useFormEngine(
-	schema: UISchema,
+	schemaProp: UISchema,
 	dataConfig: FormDataRecord = {},
 	options?: { isDebug?: boolean },
 ) {
+	// Schema in state so we can update it via updateFieldSchema; sync when prop changes
+	const [schema, setSchema] = useState<UISchema>(() => schemaProp);
+	useEffect(() => {
+		setSchema(schemaProp);
+	}, [schemaProp]);
+
 	// 1. Core States — start with dataConfig so initial load has no "changes"
 	const [workingData, setWorkingData] = useState<FormDataRecord>(() => ({
 		...dataConfig,
@@ -192,6 +199,33 @@ export function useFormEngine(
 		// Result: Reset button will now disable after this runs!
 	}, [schema]);
 
+	const updateFieldSchema = useCallback(
+		(fieldKey: string, updates: Partial<UISchemaField>) => {
+			setSchema((prev) => {
+				const currentField = prev.fields[fieldKey];
+				if (!currentField) return prev;
+				const nextField: UISchemaField = {
+					...currentField,
+					...updates,
+				};
+				if (updates.uiProps !== undefined) {
+					nextField.uiProps = {
+						...currentField?.uiProps,
+						...updates.uiProps,
+					};
+				}
+				return {
+					...prev,
+					fields: {
+						...prev.fields,
+						[fieldKey]: nextField,
+					},
+				};
+			});
+		},
+		[],
+	);
+
 	const undo = useCallback(() => {
 		if (isFormDirty || currentIndex <= 0) return;
 		const previousState = history[currentIndex - 1];
@@ -247,5 +281,6 @@ export function useFormEngine(
 		submit,
 		formVersion,
 		reset,
+		updateFieldSchema,
 	};
 }

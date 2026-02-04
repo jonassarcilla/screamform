@@ -107,7 +107,8 @@ export type UIPropValue =
 export interface UISchemaField {
 	label: string;
 	widget: string;
-	dataType?: PrimitiveType; // 🟢 Explicit type enforcement
+	/** Single type or list of allowed types; first is the default for casting/behavior */
+	dataType?: PrimitiveType | PrimitiveType[];
 	defaultValue?: LogicValue;
 	placeholder?: string;
 	description?: string;
@@ -131,6 +132,14 @@ export interface UISchemaField {
 	 */
 	uiProps?: {
 		maxItems?: number;
+		/** Key into external data for dynamic select options (e.g. 'availableRoles'). Used when options are empty or omitted. */
+		optionsKey?: string;
+		/** When true, single/multi-select shows a search input to filter options by label. */
+		searchable?: boolean;
+		/** Option values to remove from the list. Compared by String(value). */
+		excludeOptions?: LogicValue[];
+		/** Option values to show but make non-selectable (disabled). Compared by String(value). */
+		disabledOptions?: LogicValue[];
 		[key: string]: UIPropValue;
 	};
 }
