@@ -1,17 +1,84 @@
 import {
+	memo,
 	useMemo,
 	useState,
 	useEffect,
+	useRef,
 	Profiler,
 	type ReactNode,
 	type ProfilerOnRenderCallback,
 } from 'react';
-import { Check } from 'lucide-react'; // Using Lucide for the success icon
+import { useValue } from '@legendapp/state/react';
+import { Check } from 'lucide-react';
 import type { UISchema } from '@screamform/core';
 import { useFormEngine } from '../../hooks/use-form-engine';
 import { FormProvider } from '../../providers/FormContext';
+import { useRenderCount } from '@/hooks/use-render-count';
 import { FieldRenderer } from '../FieldRenderer';
 import { HistoryToolbar } from '@/components/HistoryToolbar/HistoryToolbar';
+
+const FormFields = memo(function FormFields({
+	fieldKeys,
+}: {
+	fieldKeys: readonly string[];
+}) {
+	return (
+		<>
+			{fieldKeys.map((key) => (
+				<FieldRenderer key={key} fieldKey={key} />
+			))}
+		</>
+	);
+});
+FormFields.displayName = 'FormFields';
+
+type ProfileSnapshot = {
+	id: string;
+	phase: string;
+	actualDuration: number;
+	baseDuration: number;
+};
+
+function ProfileFooter({
+	profileRef,
+	formContainerRenderCount,
+}: {
+	profileRef: React.RefObject<{
+		snapshot: ProfileSnapshot | null;
+		notify: () => void;
+	}>;
+	formContainerRenderCount: number;
+}) {
+	const [, setTick] = useState(0);
+	useEffect(() => {
+		const ref = profileRef.current;
+		if (!ref) return;
+		ref.notify = () => setTick((n) => n + 1);
+		return () => {
+			ref.notify = () => {};
+		};
+	}, [profileRef]);
+	const snapshot = profileRef.current?.snapshot ?? null;
+	return (
+		<div
+			className="text-xs font-mono text-muted-foreground bg-muted/50 rounded px-3 py-2 border border-dashed space-y-1"
+			title="React Profiler + render counts"
+		>
+			<div>
+				<span className="font-medium text-foreground">FormContainer</span>{' '}
+				renders: {formContainerRenderCount}
+			</div>
+			{snapshot && (
+				<div>
+					<span className="font-medium text-foreground">Profile</span>{' '}
+					{snapshot.id} <span className="text-amber-600">{snapshot.phase}</span>{' '}
+					— actual: {snapshot.actualDuration.toFixed(2)}ms, base:{' '}
+					{snapshot.baseDuration.toFixed(2)}ms
+				</div>
+			)}
+		</div>
+	);
+}
 
 interface FormContainerProps {
 	schema: UISchema;
@@ -31,19 +98,53 @@ export function FormContainer({
 	dataConfig,
 	externalData,
 	isDebug,
-	onSave = async (data) => console.log('Default Save (No-op):', data), // Default handler
+	onSave = async (data) => console.log('Default Save (No-op):', data),
 	children,
 	onProfile,
 }: FormContainerProps) {
-	const engine = useFormEngine(schema, dataConfig, { isDebug });
+	const {
+		formState$,
+		toolbarState$,
+		formFieldStates$,
+		formVersion$,
+		submitErrors$,
+		actions,
+	} = useFormEngine(schema, dataConfig ?? {}, { isDebug });
+	const engineRef = useRef({
+		formState$,
+		toolbarState$,
+		formFieldStates$,
+		formVersion$,
+		submitErrors$,
+	});
+	engineRef.current = {
+		formState$,
+		toolbarState$,
+		formFieldStates$,
+		formVersion$,
+		submitErrors$,
+	};
 	const [showSuccess, setShowSuccess] = useState(false);
+	const formContainerRenderCount = useRenderCount();
+	const profileRef = useRef<{
+		snapshot: ProfileSnapshot | null;
+		notify: () => void;
+	}>({ snapshot: null, notify: () => {} });
+
+	// Subscribe to toolbar slice only so typing in one field doesn’t re-render the whole form
+	const snapshot = useValue(() => toolbarState$.get());
+	const {
+		hasFormChanges,
+		submitErrors,
+		isFormDirty,
+		isSubmitting,
+		hasHistoryEntries,
+	} = snapshot;
 
 	const handleSave = async () => {
 		if (!onSave) return;
-		await engine.submit(onSave);
-
-		// If submission was successful (no errors), show the success state
-		if (!engine.submitErrors) {
+		await actions.submit(onSave);
+		if (!toolbarState$.get().submitErrors) {
 			setShowSuccess(true);
 		}
 	};
@@ -53,11 +154,10 @@ export function FormContainer({
 			'Are you sure? This will wipe all changes and clear your undo history.',
 		);
 		if (confirmed) {
-			engine.reset();
+			actions.reset();
 		}
 	};
 
-	// Reset the "Saved!" text back to "Save Changes" after 2 seconds
 	useEffect(() => {
 		if (showSuccess) {
 			const timer = setTimeout(() => setShowSuccess(false), 2000);
@@ -67,37 +167,40 @@ export function FormContainer({
 
 	useEffect(() => {
 		const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-			if (engine.hasFormChanges) {
+			if (hasFormChanges) {
 				e.preventDefault();
 			}
 		};
-
 		window.addEventListener('beforeunload', handleBeforeUnload);
-
-		// Cleanup the listener when the component unmounts
 		return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-	}, [engine.hasFormChanges]);
+	}, [hasFormChanges]);
+
+	// When isDebug is true, load React Scan so devs can see re-render highlights (script loads once per document)
+	useEffect(() => {
+		if (!isDebug || typeof document === 'undefined') return;
+		const id = 'react-scan-auto';
+		if (document.getElementById(id)) return;
+		const script = document.createElement('script');
+		script.id = id;
+		script.crossOrigin = 'anonymous';
+		script.src = 'https://unpkg.com/react-scan@0.4.3/dist/auto.global.js';
+		document.head.appendChild(script);
+	}, [isDebug]);
 
 	const contextValue = useMemo(
 		() => ({
-			...engine, // Spreading engine for brevity, ensuring hasFormChanges is included
-			getField: (key: string) => engine.fields[key],
-			onCommit: engine.commit,
+			getEngine: () => engineRef.current,
+			actions,
 			externalData,
+			isDebug: !!isDebug,
 		}),
-		[engine, externalData],
+		[actions, externalData, isDebug],
 	);
 
-	// Save enabled when handler exists, there are changes vs last save, and no uncommitted edits
-	const canSave =
-		!!onSave &&
-		engine.hasFormChanges &&
-		!engine.isFormDirty &&
-		!engine.isSubmitting;
+	const canSave = !!onSave && hasFormChanges && !isFormDirty && !isSubmitting;
+	const canReset = !isFormDirty && !isSubmitting && hasHistoryEntries;
 
-	// Reset enabled when form is not dirty, not submitting, and history has entries
-	const canReset =
-		!engine.isFormDirty && !engine.isSubmitting && engine.hasHistoryEntries;
+	const fieldKeys = useMemo(() => Object.keys(schema.fields), [schema.fields]);
 
 	const handleProfile: ProfilerOnRenderCallback = (
 		id,
@@ -108,90 +211,99 @@ export function FormContainer({
 		commitTime,
 	) => {
 		if (isDebug) {
-			console.log(
-				`[FormContainer Profiler] ${id} ${phase} — actual: ${actualDuration.toFixed(2)}ms, base: ${baseDuration.toFixed(2)}ms`,
-			);
+			profileRef.current.snapshot = { id, phase, actualDuration, baseDuration };
+			queueMicrotask(() => profileRef.current.notify());
 		}
 		onProfile?.(id, phase, actualDuration, baseDuration, startTime, commitTime);
 	};
 
-	const formContent = (
-		<div className="max-w-2xl mx-auto p-6 border rounded-xl shadow-lg bg-background space-y-6">
+	const formBody = (
+		<>
 			<div className="flex items-center justify-between border-b pb-4">
 				<h2 className="text-xl font-bold">Form Editor</h2>
 				<HistoryToolbar />
 			</div>
 
-			{engine.submitErrors?._form && (
+			{submitErrors?._form && (
 				<div className="p-3 text-sm bg-destructive/10 text-destructive border border-destructive/20 rounded-md">
-					{engine.submitErrors._form}
+					{submitErrors._form}
 				</div>
 			)}
 
 			{children}
 
 			<div className="space-y-4">
-				{Object.keys(schema.fields).map((key) => (
-					<FieldRenderer key={key} fieldKey={key} />
-				))}
+				<FormFields fieldKeys={fieldKeys} />
 			</div>
 
-			<div className="flex items-center justify-end gap-3 pt-6 border-t">
-				{engine.isFormDirty && !engine.isSubmitting && (
-					<span className="text-xs text-amber-600 font-medium animate-pulse mr-auto">
-						Finish editing to unlock save...
-					</span>
-				)}
-
-				<button
-					type="button"
-					onClick={handleReset}
-					disabled={!canReset}
-					className="px-4 py-2 text-sm font-medium transition-colors hover:text-primary disabled:opacity-50"
-				>
-					Reset
-				</button>
-
-				<button
-					type="button"
-					onClick={handleSave}
-					disabled={!canSave}
-					className={`px-6 py-2 rounded-lg font-medium transition-all flex items-center gap-2 min-w-[140px] justify-center
-							${
-								showSuccess
-									? 'bg-green-600 text-white'
-									: canSave
-										? 'bg-primary text-primary-foreground hover:opacity-90 shadow-sm'
-										: 'bg-muted text-muted-foreground opacity-50 cursor-not-allowed'
-							}`}
-				>
-					{engine.isSubmitting ? (
-						<>
-							<span className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-							Saving...
-						</>
-					) : showSuccess ? (
-						<>
-							<Check size={18} />
-							Saved!
-						</>
-					) : (
-						'Save Changes'
+			<div className="pt-6 border-t space-y-3">
+				<div className="flex items-center justify-end gap-3">
+					{isFormDirty && !isSubmitting && (
+						<span className="text-xs text-amber-600 font-medium animate-pulse mr-auto">
+							Finish editing to unlock save...
+						</span>
 					)}
-				</button>
+
+					<button
+						type="button"
+						onClick={handleReset}
+						disabled={!canReset}
+						className="px-4 py-2 text-sm font-medium transition-colors hover:text-primary disabled:opacity-50"
+					>
+						Reset
+					</button>
+
+					<button
+						type="button"
+						onClick={handleSave}
+						disabled={!canSave}
+						className={`px-6 py-2 rounded-lg font-medium transition-all flex items-center gap-2 min-w-[140px] justify-center
+								${
+									showSuccess
+										? 'bg-green-600 text-white'
+										: canSave
+											? 'bg-primary text-primary-foreground hover:opacity-90 shadow-sm'
+											: 'bg-muted text-muted-foreground opacity-50 cursor-not-allowed'
+								}`}
+					>
+						{isSubmitting ? (
+							<>
+								<span className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+								Saving...
+							</>
+						) : showSuccess ? (
+							<>
+								<Check size={18} />
+								Saved!
+							</>
+						) : (
+							'Save Changes'
+						)}
+					</button>
+				</div>
 			</div>
-		</div>
+		</>
 	);
 
 	return (
 		<FormProvider value={contextValue}>
-			{isDebug ? (
-				<Profiler id="FormContainer" onRender={handleProfile}>
-					{formContent}
-				</Profiler>
-			) : (
-				formContent
-			)}
+			<div className="max-w-2xl mx-auto p-6 border rounded-xl shadow-lg bg-background space-y-6">
+				{isDebug ? (
+					<Profiler id="FormContainer" onRender={handleProfile}>
+						{formBody}
+					</Profiler>
+				) : (
+					formBody
+				)}
+				{isDebug && (
+					<ProfileFooter
+						profileRef={profileRef}
+						formContainerRenderCount={formContainerRenderCount}
+					/>
+				)}
+			</div>
 		</FormProvider>
 	);
 }
+
+FormContainer.displayName = 'FormContainer';

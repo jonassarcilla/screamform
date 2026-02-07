@@ -1,0 +1,9 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* Tailwind v4: scan app source + library dist so all utility classes are generated */
+@source "../**/*.{ts,tsx,js,jsx}";
+@source "../../../../packages/react/dist/**/*.js";
+
+/* Library theme, base and component styles (no Tailwind import) */
+@import "../../../../packages/react/dist/theme.css";

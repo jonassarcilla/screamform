@@ -1,5 +1,5 @@
-import { useId, useState, useEffect, useRef } from 'react';
-import { Input } from '@/components/ui/input';
+import { useId, useState, useEffect, useRef, useMemo } from 'react';
+import { inputBaseClassName } from '@/components/ui/input';
 import { FieldWrapper } from '@/components/FieldWrapper';
 import {
 	Popover,
@@ -9,7 +9,6 @@ import {
 import { cn } from '@/lib/utils';
 
 import type { WidgetProps } from '../Registry';
-import { useForm } from '@/providers/FormContext';
 
 export function TextInput({
 	fieldKey,
@@ -27,11 +26,22 @@ export function TextInput({
 	uiProps,
 	autoSuggestion,
 	testId,
+	formVersion,
 	onCommit,
 }: WidgetProps) {
-	const { formVersion, getField } = useForm();
 	const id = useId();
-	const field = fieldKey != null ? getField(fieldKey) : undefined;
+	// Renders native <input> so React Scan shows "TextInput.fieldKey" (this component must be direct parent of <input>)
+	const FieldInput = useMemo(() => {
+		const C = ({ className, ...props }: React.ComponentProps<'input'>) => (
+			<input
+				data-slot="input"
+				className={cn(inputBaseClassName, className)}
+				{...props}
+			/>
+		);
+		C.displayName = fieldKey ? `TextInput.${fieldKey}` : 'TextInput';
+		return C;
+	}, [fieldKey]);
 
 	// Local draft for uncommitted changes
 	const [draft, setDraft] = useState<string>(
@@ -64,9 +74,9 @@ export function TextInput({
 	}, [normalizedValue]);
 
 	useEffect(() => {
-		// When formVersion changes, the global 'Discard' was clicked.
+		// When formVersion changes, the global 'Reset' was clicked.
 		// We must force the local draft to match the engine's truth.
-		const engineValue = String(field?.value ?? '');
+		const engineValue = value == null ? '' : String(value);
 		setDraft(engineValue);
 
 		// Reset the local committed tracker so isDirty recalculates
@@ -97,7 +107,7 @@ export function TextInput({
 
 		// Only notify the engine if the value is actually different.
 		// This prevents "zombie" updates during a discard/reset.
-		if (newVal !== String(field?.value ?? '')) {
+		if (newVal !== normalizedValue) {
 			onChange(newVal);
 		}
 	};
@@ -125,7 +135,7 @@ export function TextInput({
 	};
 
 	const inputEl = (
-		<Input
+		<FieldInput
 			id={id}
 			type="text"
 			data-testid={testId}
@@ -202,3 +212,4 @@ export function TextInput({
 		</FieldWrapper>
 	);
 }
+TextInput.displayName = 'TextInput';

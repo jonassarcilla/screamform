@@ -182,7 +182,7 @@ function processFields(
 				(field.uiProps?.description as string | undefined) ?? field.description,
 			dataType,
 			...(dataTypes !== undefined && { dataTypes }),
-			multiple: !!field.multiple,
+			multiple: !!(field.multiple ?? field.widget === 'multi-select'),
 			options: field.options || [],
 			maxItems,
 			uiProps,

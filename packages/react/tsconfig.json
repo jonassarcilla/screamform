@@ -17,14 +17,16 @@
 		"declaration": true,
 		"declarationMap": true,
 		"emitDeclarationOnly": true,
-		/* 3. Monorepo Linking */
-		"composite": true
+		/* 3. Paths to core source for dev; use tsconfig.build.json for declaration emit (uses core dist) */
+		"composite": false
 	},
 	"include": ["src/**/*"],
-	"exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.test.tsx"],
-	"references": [
-		{
-			"path": "../core"
-		}
+	"exclude": [
+		"node_modules",
+		"dist",
+		"**/*.stories.*",
+		"**/*.test.ts",
+		"**/*.test.tsx",
+		".storybook"
 	]
 }

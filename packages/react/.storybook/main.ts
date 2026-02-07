@@ -3,11 +3,13 @@ import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
+import reactScan from '@react-scan/vite-plugin-react-scan';
 
 const dirname_ = dirname(fileURLToPath(import.meta.url));
 
 const config: StorybookConfig = {
 	stories: ['../src/**/*.mdx', '../src/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
+	// React Scan script is loaded at runtime by FormContainer when isDebug is true
 	addons: [
 		'@storybook/addon-controls',
 		'@storybook/addon-actions',
@@ -17,7 +19,16 @@ const config: StorybookConfig = {
 	],
 	framework: '@storybook/react-vite',
 	async viteFinal(config) {
-		config.plugins?.push(tailwindcss());
+		config.plugins ??= [];
+		config.plugins.push(tailwindcss());
+		// React Scan: display names only; enable: false so no overlay. FormContainer loads script when isDebug is true.
+		config.plugins.push(
+			reactScan({
+				enable: false,
+				autoDisplayNames: true,
+				scanOptions: {},
+			}),
+		);
 		// HMR + file watching so saves trigger hot reload (helps on Windows/WSL)
 		config.server = config.server ?? {};
 		config.server.hmr = true;
@@ -27,7 +38,7 @@ const config: StorybookConfig = {
 			usePolling: true,
 			interval: 500,
 		};
-		// Don't pre-bundle workspace core so changes there trigger HMR
+		// Don't pre-bundle workspace core or react-scan so changes trigger HMR
 		config.optimizeDeps = config.optimizeDeps ?? {};
 		config.optimizeDeps.exclude = [
 			...(config.optimizeDeps.exclude ?? []),

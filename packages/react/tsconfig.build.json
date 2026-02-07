@@ -1,0 +1,10 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"paths": {
+			"@/*": ["./src/*"],
+			"@screamform/core": ["../core/dist/declarations/index.d.ts"],
+			"@screamform/core/*": ["../core/dist/declarations/*"]
+		}
+	}
+}

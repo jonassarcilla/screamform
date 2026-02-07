@@ -203,3 +203,4 @@ export function FieldWrapper({
 		</div>
 	);
 }
+FieldWrapper.displayName = 'FieldWrapper';

@@ -14,6 +14,8 @@ export interface WidgetProps extends FieldState {
 	onCommit?: (val: LogicValue) => void;
 	autoSave?: boolean;
 	testId?: string;
+	/** Bumped on reset; widgets sync draft when it changes */
+	formVersion?: number;
 	/** When true, single/multi-select shows search/filter UI and filters options by query. */
 	searchable?: boolean;
 	/** Option values to show but make non-selectable (disabled). Compared by String(value). */

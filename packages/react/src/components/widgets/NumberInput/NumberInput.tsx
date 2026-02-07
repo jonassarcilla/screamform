@@ -1,11 +1,12 @@
-import { useId, useState, useEffect, useRef } from 'react';
-import { Input } from '@/components/ui/input';
+import { useId, useState, useEffect, useRef, useMemo } from 'react';
+import { inputBaseClassName } from '@/components/ui/input';
 import { FieldWrapper } from '@/components/FieldWrapper';
 import { cn } from '@/lib/utils';
 
 import type { WidgetProps } from '../Registry';
 
 export function NumberInput({
+	fieldKey,
 	value,
 	label,
 	onChange,
@@ -22,6 +23,18 @@ export function NumberInput({
 	onCommit,
 }: WidgetProps) {
 	const id = useId();
+	// Renders native <input> so React Scan shows "NumberInput.fieldKey" (this component must be direct parent of <input>)
+	const FieldInput = useMemo(() => {
+		const C = ({ className, ...props }: React.ComponentProps<'input'>) => (
+			<input
+				data-slot="input"
+				className={cn(inputBaseClassName, className)}
+				{...props}
+			/>
+		);
+		C.displayName = fieldKey ? `NumberInput.${fieldKey}` : 'NumberInput';
+		return C;
+	}, [fieldKey]);
 
 	// 1. Local draft as string to handle typing and empty states safely
 	const [draft, setDraft] = useState<string>(
@@ -96,7 +109,7 @@ export function NumberInput({
 			dataType={dataType}
 			dataTypes={dataTypes}
 		>
-			<Input
+			<FieldInput
 				id={id}
 				type="number"
 				data-testid={testId}
@@ -113,3 +126,4 @@ export function NumberInput({
 		</FieldWrapper>
 	);
 }
+NumberInput.displayName = 'NumberInput';

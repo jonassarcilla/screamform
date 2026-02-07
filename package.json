@@ -3,7 +3,8 @@
   "type": "module",
   "private": true,
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "apps/*"
   ],
   "scripts": {
     "check": "bunx biome check --write ./packages",
@@ -14,6 +15,7 @@
     "build:core": "cd packages/core && bun run build",
     "build:react": "cd packages/react && bun run build",
     "dev": "bun --watch",
+    "dev:app": "cd apps/demo-next && bun run dev",
     "typecheck": "bun x tsc --noEmit"
   },
   "devDependencies": {

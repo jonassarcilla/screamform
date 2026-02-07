@@ -1,7 +1,7 @@
-import { useMemo, useState, useRef, useEffect } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { Check, ChevronsUpDown, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FieldWrapper } from '@/components/FieldWrapper';
 import {
@@ -10,6 +10,7 @@ import {
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
+	selectTriggerClassName,
 } from '@/components/ui/select';
 import {
 	Command,
@@ -23,10 +24,9 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from '@/components/ui/popover';
-import { Input } from '@/components/ui/input';
+import { inputBaseClassName } from '@/components/ui/input';
 import type { WidgetProps } from '../Registry';
 import type { LogicValue } from '@screamform/core';
-import { useForm } from '@/providers/FormContext';
 
 /** Single-select only: when options are empty and required, inject this option and use as default */
 const EMPTY_REQUIRED_OPTION = { label: 'None', value: 'none' } as const;
@@ -50,8 +50,8 @@ export function SelectInput({
 	dataTypes,
 	searchable = false,
 	disabledOptions = [],
+	formVersion,
 }: WidgetProps) {
-	const { formVersion, getField } = useForm();
 	const [multiOpen, setMultiOpen] = useState(false);
 	const multiRef = useRef<HTMLDivElement>(null);
 	const [multiSearchQuery, setMultiSearchQuery] = useState('');
@@ -61,6 +61,85 @@ export function SelectInput({
 		() => new Set((disabledOptions ?? []).map((v) => String(v))),
 		[disabledOptions],
 	);
+
+	// Renders native <input> so React Scan shows "SelectInput.fieldKey.Search" (must be direct parent of <input>)
+	const FieldSearchInput = useMemo(() => {
+		const C = ({ className, ...props }: React.ComponentProps<'input'>) => (
+			<input
+				data-slot="input"
+				className={cn(inputBaseClassName, className)}
+				{...props}
+			/>
+		);
+		C.displayName = fieldKey ? `SelectInput.${fieldKey}` : 'SelectInput';
+		return C;
+	}, [fieldKey]);
+
+	// Native <button> wrappers so React Scan shows "SelectInput.fieldKey" instead of Primitive.Button
+	const SelectInputSingleTrigger = useMemo(() => {
+		const C = React.forwardRef<
+			HTMLButtonElement,
+			React.ComponentProps<'button'> & { children?: React.ReactNode }
+		>(({ className, children, ...props }, ref) => (
+			<button
+				type="button"
+				ref={ref}
+				data-slot="select-trigger"
+				data-size="default"
+				className={cn(selectTriggerClassName, 'w-full', className)}
+				{...props}
+			>
+				{children}
+				<ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+			</button>
+		));
+		C.displayName = fieldKey ? `SelectInput.${fieldKey}` : 'SelectInput';
+		return C;
+	}, [fieldKey]);
+
+	const SelectInputMultiTrigger = useMemo(() => {
+		const C = ({
+			className,
+			children,
+			...props
+		}: React.ComponentProps<'button'>) => (
+			<button
+				type="button"
+				className={cn(
+					buttonVariants({ variant: 'outline' }),
+					'w-full justify-between h-auto min-h-10 text-left font-normal',
+					className,
+				)}
+				{...props}
+			>
+				{children}
+			</button>
+		);
+		C.displayName = fieldKey ? `SelectInput.${fieldKey}` : 'SelectInput';
+		return C;
+	}, [fieldKey]);
+
+	const SelectInputComboboxTrigger = useMemo(() => {
+		const C = React.forwardRef<
+			HTMLButtonElement,
+			React.ComponentProps<'button'> & { children?: React.ReactNode }
+		>(({ className, children, ...props }, ref) => (
+			<button
+				type="button"
+				ref={ref}
+				className={cn(
+					buttonVariants({ variant: 'outline' }),
+					'w-full justify-between font-normal',
+					className,
+				)}
+				{...props}
+			>
+				{children}
+			</button>
+		));
+		C.displayName = fieldKey ? `SelectInput.${fieldKey}` : 'SelectInput';
+		return C;
+	}, [fieldKey]);
 
 	// Draft state for autoSave: false (single: string, multi: unknown[])
 	const [draftSingle, setDraftSingle] = useState<string>(() =>
@@ -109,8 +188,8 @@ export function SelectInput({
 	}, [multiple, normalizedSingle, normalizedMulti]);
 
 	useEffect(() => {
-		const field = fieldKey != null ? getField(fieldKey) : undefined;
-		const engineValue = field?.value;
+		// When formVersion changes, the global 'Reset' was clicked.
+		const engineValue = value;
 		if (multiple) {
 			const arr = Array.isArray(engineValue) ? [...engineValue] : [];
 			setDraftMulti(arr);
@@ -121,7 +200,7 @@ export function SelectInput({
 			prevSingleRef.current = s;
 		}
 		setLastCommitted(null);
-	}, [formVersion, fieldKey, multiple]);
+	}, [formVersion]);
 
 	// Single-select only: when options are empty and required, default value to 'none' so validation passes
 	useEffect(() => {
@@ -221,7 +300,7 @@ export function SelectInput({
 		const filteredOptions =
 			searchable && query
 				? optionList.filter(
-						(opt) =>
+						(opt: { label: string; value: unknown }) =>
 							opt.label.toLowerCase().includes(query) ||
 							String(opt.value).toLowerCase().includes(query),
 					)
@@ -244,14 +323,9 @@ export function SelectInput({
 				dataTypes={dataTypes}
 			>
 				<div ref={multiRef} className="relative min-w-0 flex-1">
-					<Button
-						type="button"
-						variant="outline"
+					<SelectInputMultiTrigger
 						disabled={isDisabled}
-						className={cn(
-							'w-full justify-between h-auto min-h-10 text-left font-normal',
-							error && 'border-destructive',
-						)}
+						className={cn(error && 'border-destructive')}
 						onClick={() => setMultiOpen((o) => !o)}
 						aria-expanded={multiOpen}
 						aria-haspopup="listbox"
@@ -264,8 +338,10 @@ export function SelectInput({
 										variant="secondary"
 										className="flex items-center gap-1 [&>span]:pointer-events-auto"
 									>
-										{optionList.find((o) => String(o.value) === String(v))
-											?.label ?? String(v)}
+										{optionList.find(
+											(o: { label: string; value: unknown }) =>
+												String(o.value) === String(v),
+										)?.label ?? String(v)}
 										<span
 											role="button"
 											tabIndex={0}
@@ -282,7 +358,7 @@ export function SelectInput({
 													handleToggleMultiple(v);
 												}
 											}}
-											aria-label={`Remove ${optionList.find((o) => String(o.value) === String(v))?.label ?? v}`}
+											aria-label={`Remove ${optionList.find((o: { label: string; value: unknown }) => String(o.value) === String(v))?.label ?? v}`}
 										>
 											<X className="h-3 w-3 pointer-events-none" aria-hidden />
 										</span>
@@ -293,7 +369,7 @@ export function SelectInput({
 							)}
 						</div>
 						<ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
-					</Button>
+					</SelectInputMultiTrigger>
 					{multiOpen && (
 						<div
 							className="absolute left-0 right-0 top-full z-50 mt-1 flex max-h-[300px] flex-col overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md"
@@ -301,7 +377,7 @@ export function SelectInput({
 						>
 							{searchable && (
 								<div className="border-b p-1">
-									<Input
+									<FieldSearchInput
 										type="text"
 										placeholder="Search..."
 										value={multiSearchQuery}
@@ -322,43 +398,45 @@ export function SelectInput({
 										No results
 									</div>
 								) : (
-									filteredOptions.map((opt) => {
-										const isSelected = multiValues.some(
-											(v) => String(v) === String(opt.value),
-										);
-										const isDisabled = disabledSet.has(String(opt.value));
-										return (
-											<button
-												key={String(opt.value)}
-												type="button"
-												role="option"
-												aria-selected={isSelected}
-												aria-disabled={isDisabled}
-												disabled={isDisabled}
-												className={cn(
-													'flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-2 text-left text-sm outline-none hover:bg-accent hover:text-accent-foreground',
-													isSelected && 'bg-accent',
-													isDisabled &&
-														'cursor-not-allowed opacity-50 pointer-events-none',
-												)}
-												onClick={() =>
-													!isDisabled && handleToggleMultiple(opt.value)
-												}
-											>
-												<div
+									filteredOptions.map(
+										(opt: { label: string; value: unknown }) => {
+											const isSelected = multiValues.some(
+												(v) => String(v) === String(opt.value),
+											);
+											const isDisabled = disabledSet.has(String(opt.value));
+											return (
+												<button
+													key={String(opt.value)}
+													type="button"
+													role="option"
+													aria-selected={isSelected}
+													aria-disabled={isDisabled}
+													disabled={isDisabled}
 													className={cn(
-														'flex h-4 w-4 shrink-0 items-center justify-center rounded border',
-														isSelected
-															? 'bg-primary text-primary-foreground'
-															: 'opacity-50',
+														'flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-2 text-left text-sm outline-none hover:bg-accent hover:text-accent-foreground',
+														isSelected && 'bg-accent',
+														isDisabled &&
+															'cursor-not-allowed opacity-50 pointer-events-none',
 													)}
+													onClick={() =>
+														!isDisabled && handleToggleMultiple(opt.value)
+													}
 												>
-													{isSelected && <Check className="h-3 w-3" />}
-												</div>
-												{opt.label}
-											</button>
-										);
-									})
+													<div
+														className={cn(
+															'flex h-4 w-4 shrink-0 items-center justify-center rounded border',
+															isSelected
+																? 'bg-primary text-primary-foreground'
+																: 'opacity-50',
+														)}
+													>
+														{isSelected && <Check className="h-3 w-3" />}
+													</div>
+													{opt.label}
+												</button>
+											);
+										},
+									)
 								)}
 							</div>
 						</div>
@@ -393,7 +471,8 @@ export function SelectInput({
 	const singleDisplayLabel =
 		singleDisplayValue != null && singleDisplayValue !== ''
 			? (singleSelectOptions.find(
-					(o) => String(o.value) === String(singleDisplayValue),
+					(o: { label: string; value: unknown }) =>
+						String(o.value) === String(singleDisplayValue),
 				)?.label ?? String(singleDisplayValue))
 			: null;
 
@@ -419,14 +498,9 @@ export function SelectInput({
 						onOpenChange={setSingleComboboxOpen}
 					>
 						<PopoverTrigger asChild>
-							<Button
-								type="button"
-								variant="outline"
+							<SelectInputComboboxTrigger
 								disabled={isDisabled}
-								className={cn(
-									'w-full justify-between font-normal',
-									error && 'border-destructive',
-								)}
+								className={cn(error && 'border-destructive')}
 								aria-expanded={singleComboboxOpen}
 								aria-haspopup="listbox"
 							>
@@ -438,7 +512,7 @@ export function SelectInput({
 									{singleDisplayLabel ?? placeholder}
 								</span>
 								<ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
-							</Button>
+							</SelectInputComboboxTrigger>
 						</PopoverTrigger>
 						<PopoverContent
 							className="w-(--radix-popover-trigger-width) p-0"
@@ -452,30 +526,32 @@ export function SelectInput({
 								/>
 								<CommandList>
 									<CommandEmpty>No results.</CommandEmpty>
-									{singleSelectOptions.map((opt) => {
-										const isDisabled = disabledSet.has(String(opt.value));
-										return (
-											<CommandItem
-												key={String(opt.value)}
-												value={`${opt.label} ${String(opt.value)}`}
-												disabled={isDisabled}
-												onSelect={() => {
-													if (isDisabled) return;
-													const final = castValue(opt.value);
-													if (autoSave) {
-														onChange(final);
-														onCommit?.(final);
-													} else {
-														setDraftSingle(String(opt.value));
-														onChange(final);
-													}
-													setSingleComboboxOpen(false);
-												}}
-											>
-												{opt.label}
-											</CommandItem>
-										);
-									})}
+									{singleSelectOptions.map(
+										(opt: { label: string; value: unknown }) => {
+											const isDisabled = disabledSet.has(String(opt.value));
+											return (
+												<CommandItem
+													key={String(opt.value)}
+													value={`${opt.label} ${String(opt.value)}`}
+													disabled={isDisabled}
+													onSelect={() => {
+														if (isDisabled) return;
+														const final = castValue(opt.value);
+														if (autoSave) {
+															onChange(final);
+															onCommit?.(final);
+														} else {
+															setDraftSingle(String(opt.value));
+															onChange(final);
+														}
+														setSingleComboboxOpen(false);
+													}}
+												>
+													{opt.label}
+												</CommandItem>
+											);
+										},
+									)}
 								</CommandList>
 							</Command>
 						</PopoverContent>
@@ -515,13 +591,15 @@ export function SelectInput({
 					}}
 					disabled={isDisabled}
 				>
-					<SelectTrigger
-						className={cn(
-							'w-full pointer-events-auto',
-							error && 'border-destructive',
-						)}
-					>
-						<SelectValue placeholder={placeholder} />
+					<SelectTrigger asChild>
+						<SelectInputSingleTrigger
+							className={cn(
+								'w-full pointer-events-auto',
+								error && 'border-destructive',
+							)}
+						>
+							<SelectValue placeholder={placeholder} />
+						</SelectInputSingleTrigger>
 					</SelectTrigger>
 					<SelectContent
 						position="popper"
@@ -530,18 +608,21 @@ export function SelectInput({
 						sideOffset={0}
 						className="z-100 bg-popover border shadow-md"
 					>
-						{singleSelectOptions.map((opt) => (
-							<SelectItem
-								key={String(opt.value)}
-								value={String(opt.value)}
-								disabled={disabledSet.has(String(opt.value))}
-							>
-								{opt.label}
-							</SelectItem>
-						))}
+						{singleSelectOptions.map(
+							(opt: { label: string; value: unknown }) => (
+								<SelectItem
+									key={String(opt.value)}
+									value={String(opt.value)}
+									disabled={disabledSet.has(String(opt.value))}
+								>
+									{opt.label}
+								</SelectItem>
+							),
+						)}
 					</SelectContent>
 				</Select>
 			</div>
 		</FieldWrapper>
 	);
 }
+SelectInput.displayName = 'SelectInput';

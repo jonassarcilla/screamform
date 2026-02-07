@@ -1,10 +1,73 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import type { UISchemaField } from '@screamform/core';
 import { FormContainer } from './FormContainer';
-import { useForm } from '@/providers/FormContext';
+import { useForm } from '../../providers/FormContext';
+
+const SHARED_SELECT_OPTIONS = [
+	{ label: 'Option A', value: 'a' },
+	{ label: 'Option B', value: 'b' },
+	{ label: 'Option C', value: 'c' },
+	{ label: 'Option D', value: 'd' },
+];
+
+function createManyFieldsSchema(count: number) {
+	const widgets: Array<'text' | 'number' | 'select' | 'multi-select'> = [
+		'text',
+		'number',
+		'select',
+		'multi-select',
+	];
+	const fields: Record<string, UISchemaField> = {};
+	const dataConfig: Record<string, unknown> = {};
+	for (let i = 0; i < count; i++) {
+		const key = `field_${i}`;
+		const widget = widgets[i % widgets.length];
+		// Deterministic "random" autoSave: false for ~30% of fields (same result every load)
+		const autoSaveFalse = (i * 7 + 11) % 10 < 3;
+		const base: Pick<UISchemaField, 'label' | 'autoSave'> = {
+			label: `Field ${i + 1} (${widget}${autoSaveFalse ? ', no autoSave' : ''})`,
+			...(autoSaveFalse && { autoSave: false }),
+		};
+		if (widget === 'text') {
+			fields[key] = { widget: 'text', ...base };
+			dataConfig[key] = '';
+		} else if (widget === 'number') {
+			fields[key] = { widget: 'number', ...base };
+			dataConfig[key] = 0;
+		} else if (widget === 'select') {
+			fields[key] = {
+				widget: 'select',
+				...base,
+				placeholder: 'Choose...',
+				options: SHARED_SELECT_OPTIONS,
+			};
+			dataConfig[key] = undefined;
+		} else {
+			fields[key] = {
+				widget: 'select',
+				multiple: true,
+				...base,
+				placeholder: 'Pick...',
+				options: SHARED_SELECT_OPTIONS,
+				uiProps: { maxItems: 4 },
+			};
+			dataConfig[key] = [];
+		}
+	}
+	return { schema: { fields }, dataConfig };
+}
 
 const meta: Meta<typeof FormContainer> = {
 	title: 'Components/FormContainer',
 	component: FormContainer,
+	parameters: {
+		docs: {
+			description: {
+				component:
+					'**React Scan (Storybook):** (1) Start Storybook (`pnpm storybook`). (2) Open a story in the canvas (e.g. Default). (3) Run `npx react-scan@latest "http://localhost:6006/iframe.html?id=components-formcontainer--default"` in another terminal. React Scan opens a browser window and highlights re-renders.',
+			},
+		},
+	},
 	argTypes: {
 		schema: {
 			control: 'object',
@@ -625,6 +688,48 @@ export const DynamicOptionsFromExternalData: Story = {
 		onSave: async (data) => {
 			await new Promise((r) => setTimeout(r, 500));
 			console.log('Saved:', data);
+		},
+	},
+};
+
+/** Form with 30 fields: text, number, select, multi-select; some with autoSave: false. */
+export const MultipleFields: Story = {
+	name: 'Multiple Fields (30)',
+	args: {
+		isDebug: true,
+		...createManyFieldsSchema(30),
+		onSave: async (data) => {
+			await new Promise((r) => setTimeout(r, 500));
+			console.log('Saved:', data);
+		},
+	},
+	parameters: {
+		docs: {
+			description: {
+				story:
+					'Form with 30 fields using all widgets (text, number, select, multi-select). About 30% of fields have autoSave: false (Commit/Discard). Use with isDebug to see per-field render counts (R:N).',
+			},
+		},
+	},
+};
+
+/** Form with 50 fields for stress-testing: all widgets, some autoSave: false. */
+export const MultipleFields50: Story = {
+	name: 'Multiple Fields (50)',
+	args: {
+		isDebug: true,
+		...createManyFieldsSchema(50),
+		onSave: async (data) => {
+			await new Promise((r) => setTimeout(r, 500));
+			console.log('Saved:', data);
+		},
+	},
+	parameters: {
+		docs: {
+			description: {
+				story:
+					'Form with 50 fields (text, number, select, multi-select); some with autoSave: false. For heavier load testing and per-field render counts.',
+			},
 		},
 	},
 };

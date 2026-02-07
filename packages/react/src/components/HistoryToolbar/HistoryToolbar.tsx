@@ -1,11 +1,10 @@
-import { useForm } from '../../providers/FormContext';
+import { useFormActions, useFormMeta } from '../../providers/FormContext';
 import { Button } from '../ui/button';
 import { Undo2, Redo2, Info } from 'lucide-react';
 
 export function HistoryToolbar() {
-	const { undo, redo, canUndo, canRedo, isFormDirty } = useForm();
-
-	console.log('Toolbar State:', { canUndo, isFormDirty }); // Watch this as you type
+	const { undo, redo } = useFormActions();
+	const { canUndo, canRedo, isFormDirty } = useFormMeta();
 
 	return (
 		<div className="flex items-center justify-between p-2 mb-4 border rounded-md bg-muted/30">
