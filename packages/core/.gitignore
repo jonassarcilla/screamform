@@ -6,6 +6,10 @@ out
 dist
 *.tgz
 
+# generated declarations (should only be in dist/declarations)
+src/**/*.d.ts
+src/**/*.d.ts.map
+
 # code coverage
 coverage
 *.lcov
