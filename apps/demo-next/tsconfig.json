@@ -17,6 +17,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
+      "@screamform/core": ["../../packages/core"],
+      "@screamform/core/*": ["../../packages/core/*"],
       "@screamform/react": ["../../packages/react"],
       "@screamform/react/*": ["../../packages/react/*"]
     }
