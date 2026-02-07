@@ -71,6 +71,11 @@ export function FieldRenderer({ fieldKey }: FieldRendererProps) {
 					? state.uiProps.disabledOptions
 					: []
 			}
+			autoSuggestion={
+				Array.isArray(state.uiProps?.autoSuggestion)
+					? state.uiProps.autoSuggestion
+					: undefined
+			}
 			dataType={state.dataType}
 			dataTypes={state.dataTypes}
 			testId={

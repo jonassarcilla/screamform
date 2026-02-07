@@ -1,4 +1,11 @@
-import { useMemo, useState, useEffect, type ReactNode } from 'react';
+import {
+	useMemo,
+	useState,
+	useEffect,
+	Profiler,
+	type ReactNode,
+	type ProfilerOnRenderCallback,
+} from 'react';
 import { Check } from 'lucide-react'; // Using Lucide for the success icon
 import type { UISchema } from '@screamform/core';
 import { useFormEngine } from '../../hooks/use-form-engine';
@@ -15,6 +22,8 @@ interface FormContainerProps {
 	onSave?: (data: Record<string, unknown>) => Promise<void>;
 	/** Rendered inside FormProvider (e.g. toolbar that uses useForm().updateFieldSchema) */
 	children?: ReactNode;
+	/** Called on each commit when profiling (isDebug). Receives id, phase, actualDuration, baseDuration, etc. */
+	onProfile?: ProfilerOnRenderCallback;
 }
 
 export function FormContainer({
@@ -24,6 +33,7 @@ export function FormContainer({
 	isDebug,
 	onSave = async (data) => console.log('Default Save (No-op):', data), // Default handler
 	children,
+	onProfile,
 }: FormContainerProps) {
 	const engine = useFormEngine(schema, dataConfig, { isDebug });
 	const [showSuccess, setShowSuccess] = useState(false);
@@ -89,49 +99,64 @@ export function FormContainer({
 	const canReset =
 		!engine.isFormDirty && !engine.isSubmitting && engine.hasHistoryEntries;
 
-	return (
-		<FormProvider value={contextValue}>
-			<div className="max-w-2xl mx-auto p-6 border rounded-xl shadow-lg bg-background space-y-6">
-				<div className="flex items-center justify-between border-b pb-4">
-					<h2 className="text-xl font-bold">Form Editor</h2>
-					<HistoryToolbar />
-				</div>
+	const handleProfile: ProfilerOnRenderCallback = (
+		id,
+		phase,
+		actualDuration,
+		baseDuration,
+		startTime,
+		commitTime,
+	) => {
+		if (isDebug) {
+			console.log(
+				`[FormContainer Profiler] ${id} ${phase} — actual: ${actualDuration.toFixed(2)}ms, base: ${baseDuration.toFixed(2)}ms`,
+			);
+		}
+		onProfile?.(id, phase, actualDuration, baseDuration, startTime, commitTime);
+	};
 
-				{engine.submitErrors?._form && (
-					<div className="p-3 text-sm bg-destructive/10 text-destructive border border-destructive/20 rounded-md">
-						{engine.submitErrors._form}
-					</div>
+	const formContent = (
+		<div className="max-w-2xl mx-auto p-6 border rounded-xl shadow-lg bg-background space-y-6">
+			<div className="flex items-center justify-between border-b pb-4">
+				<h2 className="text-xl font-bold">Form Editor</h2>
+				<HistoryToolbar />
+			</div>
+
+			{engine.submitErrors?._form && (
+				<div className="p-3 text-sm bg-destructive/10 text-destructive border border-destructive/20 rounded-md">
+					{engine.submitErrors._form}
+				</div>
+			)}
+
+			{children}
+
+			<div className="space-y-4">
+				{Object.keys(schema.fields).map((key) => (
+					<FieldRenderer key={key} fieldKey={key} />
+				))}
+			</div>
+
+			<div className="flex items-center justify-end gap-3 pt-6 border-t">
+				{engine.isFormDirty && !engine.isSubmitting && (
+					<span className="text-xs text-amber-600 font-medium animate-pulse mr-auto">
+						Finish editing to unlock save...
+					</span>
 				)}
 
-				{children}
+				<button
+					type="button"
+					onClick={handleReset}
+					disabled={!canReset}
+					className="px-4 py-2 text-sm font-medium transition-colors hover:text-primary disabled:opacity-50"
+				>
+					Reset
+				</button>
 
-				<div className="space-y-4">
-					{Object.keys(schema.fields).map((key) => (
-						<FieldRenderer key={key} fieldKey={key} />
-					))}
-				</div>
-
-				<div className="flex items-center justify-end gap-3 pt-6 border-t">
-					{engine.isFormDirty && !engine.isSubmitting && (
-						<span className="text-xs text-amber-600 font-medium animate-pulse mr-auto">
-							Finish editing to unlock save...
-						</span>
-					)}
-
-					<button
-						type="button"
-						onClick={handleReset}
-						disabled={!canReset}
-						className="px-4 py-2 text-sm font-medium transition-colors hover:text-primary disabled:opacity-50"
-					>
-						Reset
-					</button>
-
-					<button
-						type="button"
-						onClick={handleSave}
-						disabled={!canSave}
-						className={`px-6 py-2 rounded-lg font-medium transition-all flex items-center gap-2 min-w-[140px] justify-center
+				<button
+					type="button"
+					onClick={handleSave}
+					disabled={!canSave}
+					className={`px-6 py-2 rounded-lg font-medium transition-all flex items-center gap-2 min-w-[140px] justify-center
 							${
 								showSuccess
 									? 'bg-green-600 text-white'
@@ -139,23 +164,34 @@ export function FormContainer({
 										? 'bg-primary text-primary-foreground hover:opacity-90 shadow-sm'
 										: 'bg-muted text-muted-foreground opacity-50 cursor-not-allowed'
 							}`}
-					>
-						{engine.isSubmitting ? (
-							<>
-								<span className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-								Saving...
-							</>
-						) : showSuccess ? (
-							<>
-								<Check size={18} />
-								Saved!
-							</>
-						) : (
-							'Save Changes'
-						)}
-					</button>
-				</div>
+				>
+					{engine.isSubmitting ? (
+						<>
+							<span className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+							Saving...
+						</>
+					) : showSuccess ? (
+						<>
+							<Check size={18} />
+							Saved!
+						</>
+					) : (
+						'Save Changes'
+					)}
+				</button>
 			</div>
+		</div>
+	);
+
+	return (
+		<FormProvider value={contextValue}>
+			{isDebug ? (
+				<Profiler id="FormContainer" onRender={handleProfile}>
+					{formContent}
+				</Profiler>
+			) : (
+				formContent
+			)}
 		</FormProvider>
 	);
 }

@@ -18,6 +18,8 @@ export interface WidgetProps extends FieldState {
 	searchable?: boolean;
 	/** Option values to show but make non-selectable (disabled). Compared by String(value). */
 	disabledOptions?: unknown[];
+	/** For text: suggestion strings for datalist/autocomplete. */
+	autoSuggestion?: string[];
 }
 
 /**

@@ -172,10 +172,14 @@ function processFields(
 			isDisabled,
 			error,
 			isRequired,
-			label: field.label,
+			label: (field.uiProps?.label as string | undefined) ?? field.label,
 			widget: field.widget,
-			placeholder: field.placeholder ?? '',
-			description: field.description,
+			placeholder:
+				(field.uiProps?.placeholder as string | undefined) ??
+				field.placeholder ??
+				'',
+			description:
+				(field.uiProps?.description as string | undefined) ?? field.description,
 			dataType,
 			...(dataTypes !== undefined && { dataTypes }),
 			multiple: !!field.multiple,

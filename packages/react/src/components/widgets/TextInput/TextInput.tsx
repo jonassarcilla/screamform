@@ -1,6 +1,11 @@
 import { useId, useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { FieldWrapper } from '@/components/FieldWrapper';
+import {
+	Popover,
+	PopoverAnchor,
+	PopoverContent,
+} from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
 import type { WidgetProps } from '../Registry';
@@ -20,6 +25,7 @@ export function TextInput({
 	dataType,
 	dataTypes,
 	uiProps,
+	autoSuggestion,
 	testId,
 	onCommit,
 }: WidgetProps) {
@@ -31,6 +37,17 @@ export function TextInput({
 	const [draft, setDraft] = useState<string>(
 		value == null ? '' : String(value),
 	);
+	const [suggestionOpen, setSuggestionOpen] = useState(false);
+	const ignoreNextCloseRef = useRef(false);
+	const hasSuggestions = Boolean(autoSuggestion?.length);
+	const filteredSuggestions =
+		hasSuggestions && draft.trim() !== ''
+			? autoSuggestion!.filter((s) =>
+					s.toLowerCase().includes(draft.trim().toLowerCase()),
+				)
+			: hasSuggestions
+				? autoSuggestion!
+				: [];
 	// Last value we committed; used so isDirty becomes false immediately on commit
 	const [lastCommitted, setLastCommitted] = useState<string | null>(null);
 
@@ -85,6 +102,46 @@ export function TextInput({
 		}
 	};
 
+	const handleFocus = () => {
+		if (hasSuggestions) {
+			ignoreNextCloseRef.current = true;
+			setSuggestionOpen(true);
+		}
+	};
+
+	const handleOpenChange = (open: boolean) => {
+		if (!open && ignoreNextCloseRef.current) {
+			ignoreNextCloseRef.current = false;
+			return;
+		}
+		setSuggestionOpen(open);
+	};
+
+	const handleSelectSuggestion = (item: string) => {
+		setDraft(item);
+		onChange(item);
+		ignoreNextCloseRef.current = false;
+		setSuggestionOpen(false);
+	};
+
+	const inputEl = (
+		<Input
+			id={id}
+			type="text"
+			data-testid={testId}
+			value={draft}
+			disabled={isDisabled}
+			placeholder={placeholder}
+			onChange={handleChange}
+			onFocus={handleFocus}
+			autoComplete={hasSuggestions ? 'off' : undefined}
+			className={cn(
+				'transition-colors w-full min-w-0',
+				error && 'border-destructive focus-visible:ring-destructive',
+			)}
+		/>
+	);
+
 	return (
 		<FieldWrapper
 			className={cn(uiProps?.className as string | undefined)}
@@ -100,19 +157,48 @@ export function TextInput({
 			dataType={dataType}
 			dataTypes={dataTypes}
 		>
-			<Input
-				id={id}
-				type="text"
-				data-testid={testId}
-				value={draft}
-				disabled={isDisabled}
-				placeholder={placeholder}
-				onChange={handleChange}
-				className={cn(
-					'transition-colors w-full min-w-0',
-					error && 'border-destructive focus-visible:ring-destructive',
-				)}
-			/>
+			{hasSuggestions ? (
+				<Popover
+					open={suggestionOpen}
+					onOpenChange={handleOpenChange}
+					modal={false}
+				>
+					<PopoverAnchor asChild>
+						<div className="min-w-0 flex-1">{inputEl}</div>
+					</PopoverAnchor>
+					<PopoverContent
+						className="w-(--radix-popover-trigger-width) max-h-[200px] overflow-y-auto p-0"
+						align="start"
+						sideOffset={4}
+						onOpenAutoFocus={(e) => e.preventDefault()}
+					>
+						{filteredSuggestions.length === 0 ? (
+							<div className="py-3 px-2 text-center text-sm text-muted-foreground">
+								No suggestions
+							</div>
+						) : (
+							<ul className="py-1" role="listbox">
+								{filteredSuggestions.map((item, i) => (
+									<li key={i} role="option">
+										<button
+											type="button"
+											className="w-full cursor-pointer px-3 py-2 text-left text-sm outline-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+											onMouseDown={(e) => {
+												e.preventDefault();
+												handleSelectSuggestion(item);
+											}}
+										>
+											{item}
+										</button>
+									</li>
+								))}
+							</ul>
+						)}
+					</PopoverContent>
+				</Popover>
+			) : (
+				inputEl
+			)}
 		</FieldWrapper>
 	);
 }

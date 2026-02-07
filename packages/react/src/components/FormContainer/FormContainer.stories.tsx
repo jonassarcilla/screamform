@@ -65,6 +65,41 @@ export const WithDebug: Story = {
 	},
 };
 
+export const WithProfiler: Story = {
+	name: 'With Profiler (isDebug + onProfile)',
+	args: {
+		isDebug: true,
+		onProfile: (
+			id: string,
+			phase: string,
+			actualDuration: number,
+			baseDuration: number,
+		) => {
+			console.log(
+				`[Profiler] ${id} ${phase} — actual: ${actualDuration.toFixed(2)}ms, base: ${baseDuration.toFixed(2)}ms`,
+			);
+		},
+		schema: {
+			fields: {
+				title: {
+					widget: 'text',
+					label: 'Project Title',
+					validation: {
+						type: 'required',
+						errorMessage: 'Project title is required',
+					},
+				},
+				budget: { widget: 'number', label: 'Budget Limit' },
+			},
+		},
+		dataConfig: { title: '', budget: 0 },
+		onSave: async (data) => {
+			await new Promise((r) => setTimeout(r, 500));
+			console.log('Saved:', data);
+		},
+	},
+};
+
 export const WithAutoSaveDisabled: Story = {
 	args: {
 		isDebug: true,
@@ -120,6 +155,29 @@ export const WithSelectInput: Story = {
 			title: 'My Project',
 			status: 'draft',
 		},
+		onSave: async (data) => {
+			await new Promise((r) => setTimeout(r, 500));
+			console.log('Saved:', data);
+		},
+	},
+};
+
+export const TextInputWithAutoSuggestion: Story = {
+	name: 'Text Input with autoSuggestion',
+	args: {
+		schema: {
+			fields: {
+				fruit: {
+					widget: 'text',
+					label: 'Fruit',
+					placeholder: 'Type or pick a fruit...',
+					uiProps: {
+						autoSuggestion: ['Apple', 'Banana', 'Cherry', 'Date', 'Elderberry'],
+					},
+				},
+			},
+		},
+		dataConfig: { fruit: '' },
 		onSave: async (data) => {
 			await new Promise((r) => setTimeout(r, 500));
 			console.log('Saved:', data);
@@ -442,6 +500,78 @@ export const UpdateFieldSchema: Story = {
 	render: (args) => (
 		<FormContainer {...args}>
 			<UpdateSchemaDemo />
+		</FormContainer>
+	),
+};
+
+/** Demonstrates updateFieldSchema: buttons dynamically set label, placeholder, description on the Title field. */
+function UpdateLabelPlaceholderDescriptionDemo() {
+	const { updateFieldSchema } = useForm();
+	return (
+		<div className="flex flex-wrap items-center gap-2 rounded-md border border-dashed border-muted-foreground/30 bg-muted/30 px-3 py-2 text-sm">
+			<span className="font-medium text-muted-foreground">
+				updateFieldSchema (label / placeholder / description):
+			</span>
+			<button
+				type="button"
+				onClick={() =>
+					updateFieldSchema?.('title', {
+						uiProps: {
+							label: 'Project Name (updated)',
+							placeholder: 'Enter project name...',
+							description: 'A short name for your project.',
+						},
+					})
+				}
+				className="rounded bg-primary px-2 py-1 text-primary-foreground hover:opacity-90"
+			>
+				Set custom label / placeholder / description
+			</button>
+			<button
+				type="button"
+				onClick={() =>
+					updateFieldSchema?.('title', {
+						uiProps: {
+							label: 'Title',
+							placeholder: 'Type here...',
+							description: undefined,
+						},
+					})
+				}
+				className="rounded border border-input bg-background px-2 py-1 hover:bg-accent"
+			>
+				Reset to defaults
+			</button>
+		</div>
+	);
+}
+
+export const UpdateLabelPlaceholderDescription: Story = {
+	name: 'Update Label, Placeholder, Description',
+	args: {
+		schema: {
+			fields: {
+				title: {
+					widget: 'text',
+					label: 'Title',
+					placeholder: 'Type here...',
+					description: 'Initial description for the title field.',
+					validation: {
+						type: 'required',
+						errorMessage: 'Title is required',
+					},
+				},
+			},
+		},
+		dataConfig: { title: '' },
+		onSave: async (data) => {
+			await new Promise((r) => setTimeout(r, 500));
+			console.log('Saved:', data);
+		},
+	},
+	render: (args) => (
+		<FormContainer {...args}>
+			<UpdateLabelPlaceholderDescriptionDemo />
 		</FormContainer>
 	),
 };

@@ -407,4 +407,53 @@ describe('Use Case: getFieldState', () => {
 		expect(state.fields.name?.error).toBe('Name is required');
 		expect(state.isValid).toBe(false);
 	});
+
+	test('uiProps.label, placeholder, description override top-level field values', () => {
+		const schema: UISchema = {
+			fields: {
+				x: {
+					label: 'Default Label',
+					placeholder: 'Default placeholder',
+					description: 'Default description',
+					widget: 'text',
+					uiProps: {
+						label: 'Override Label',
+						placeholder: 'Override placeholder',
+						description: 'Override description',
+					},
+				},
+			},
+		};
+		const state = getFieldState(schema, { x: '' });
+		expect(state.fields.x?.label).toBe('Override Label');
+		expect(state.fields.x?.placeholder).toBe('Override placeholder');
+		expect(state.fields.x?.description).toBe('Override description');
+	});
+
+	test('when uiProps has no label, placeholder, description state uses top-level field values', () => {
+		const schema: UISchema = {
+			fields: {
+				y: {
+					label: 'Only Label',
+					placeholder: 'Only placeholder',
+					description: 'Only description',
+					widget: 'text',
+				},
+			},
+		};
+		const state = getFieldState(schema, { y: '' });
+		expect(state.fields.y?.label).toBe('Only Label');
+		expect(state.fields.y?.placeholder).toBe('Only placeholder');
+		expect(state.fields.y?.description).toBe('Only description');
+	});
+
+	test('placeholder falls back to empty string when neither field nor uiProps set', () => {
+		const schema: UISchema = {
+			fields: {
+				z: { label: 'Z', widget: 'text' },
+			},
+		};
+		const state = getFieldState(schema, { z: '' });
+		expect(state.fields.z?.placeholder).toBe('');
+	});
 });

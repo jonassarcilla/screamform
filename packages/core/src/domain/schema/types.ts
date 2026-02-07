@@ -140,6 +140,14 @@ export interface UISchemaField {
 		excludeOptions?: LogicValue[];
 		/** Option values to show but make non-selectable (disabled). Compared by String(value). */
 		disabledOptions?: LogicValue[];
+		/** When set, overrides the field's top-level label for display. Allows dynamic updates via updateFieldSchema. */
+		label?: string;
+		/** When set, overrides the field's top-level placeholder. Allows dynamic updates via updateFieldSchema. */
+		placeholder?: string;
+		/** When set, overrides the field's top-level description. Allows dynamic updates via updateFieldSchema. */
+		description?: string;
+		/** For text fields: list of suggestion strings to show (e.g. native datalist / autocomplete). */
+		autoSuggestion?: string[];
 		[key: string]: UIPropValue;
 	};
 }
