@@ -18,7 +18,7 @@
 		"declarationMap": true,
 		"emitDeclarationOnly": true,
 		/* 3. Paths to core source for dev; use tsconfig.build.json for declaration emit (uses core dist) */
-		"composite": false
+		"composite": true
 	},
 	"include": ["src/**/*"],
 	"exclude": [

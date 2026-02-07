@@ -12,7 +12,13 @@ export {
 	useFormMetaForField,
 	useFormMeta,
 	useFormIsDebug,
+	useWidgetRegistry,
 } from '@/providers/FormContext';
+export { DefaultWidgets } from '@/components/widgets/Registry';
+export type {
+	WidgetRegistry,
+	WidgetProps,
+} from '@/components/widgets/Registry';
 export type { FormEngineRef, FormContextValue } from '@/providers/FormContext';
 export type {
 	FormEngineActions,

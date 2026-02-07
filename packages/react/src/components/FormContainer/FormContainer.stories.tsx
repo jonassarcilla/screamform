@@ -2,6 +2,8 @@ import type { Meta, StoryObj } from '@storybook/react';
 import type { UISchemaField } from '@screamform/core';
 import { FormContainer } from './FormContainer';
 import { useForm } from '../../providers/FormContext';
+import { DefaultWidgets, type WidgetProps } from '../widgets/Registry';
+import { FieldWrapper } from '../FieldWrapper';
 
 const SHARED_SELECT_OPTIONS = [
 	{ label: 'Option A', value: 'a' },
@@ -729,6 +731,234 @@ export const MultipleFields50: Story = {
 			description: {
 				story:
 					'Form with 50 fields (text, number, select, multi-select); some with autoSave: false. For heavier load testing and per-field render counts.',
+			},
+		},
+	},
+};
+
+// --- Custom / override widget demos ---
+
+/** Simple custom widget: 1–5 star rating. Implements WidgetProps and is registered via widgets prop. */
+function RatingWidget({
+	label,
+	value,
+	onChange,
+	error,
+	isRequired,
+	isDisabled,
+	placeholder,
+}: WidgetProps) {
+	const num = typeof value === 'number' && Number.isFinite(value) ? value : 0;
+	const stars = [1, 2, 3, 4, 5];
+	return (
+		<FieldWrapper
+			label={label ?? 'Rating'}
+			error={error}
+			isRequired={isRequired}
+			isDisabled={isDisabled}
+		>
+			<div className="flex gap-1">
+				{stars.map((n) => (
+					<button
+						key={n}
+						type="button"
+						disabled={isDisabled}
+						className={`rounded border px-2 py-1 text-sm transition-colors ${
+							n <= num
+								? 'border-amber-500 bg-amber-100 text-amber-800'
+								: 'border-input bg-background hover:bg-muted'
+						}`}
+						onClick={() => onChange(n)}
+						aria-label={`${n} star${n > 1 ? 's' : ''}`}
+					>
+						★
+					</button>
+				))}
+			</div>
+		</FieldWrapper>
+	);
+}
+
+/** Override widget: custom-styled text input. Same contract as default text but different look. */
+function CustomStyledTextWidget(props: WidgetProps) {
+	const { label, value, onChange, error, isRequired, isDisabled, placeholder } =
+		props;
+	const val = value == null ? '' : String(value);
+	return (
+		<FieldWrapper
+			label={label ?? ''}
+			error={error}
+			isRequired={isRequired}
+			isDisabled={isDisabled}
+		>
+			<input
+				type="text"
+				value={val}
+				onChange={(e) => onChange(e.target.value)}
+				disabled={isDisabled}
+				placeholder={placeholder ?? ''}
+				className="w-full rounded-lg border-2 border-dashed border-primary/30 bg-primary/5 px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none disabled:opacity-50"
+			/>
+		</FieldWrapper>
+	);
+}
+
+/** Form using a custom "rating" widget registered via widgets prop. */
+export const CustomWidget: Story = {
+	name: 'Custom Widget (rating)',
+	args: {
+		schema: {
+			fields: {
+				title: {
+					widget: 'text',
+					label: 'Title',
+					validation: {
+						type: 'required',
+						errorMessage: 'Title is required',
+					},
+				},
+				satisfaction: {
+					widget: 'rating',
+					label: 'Satisfaction (1–5)',
+				},
+			},
+		},
+		dataConfig: { title: '', satisfaction: 0 },
+		widgets: { ...DefaultWidgets, rating: RatingWidget },
+		onSave: async (data) => {
+			await new Promise((r) => setTimeout(r, 500));
+			console.log('Saved:', data);
+		},
+	},
+	parameters: {
+		docs: {
+			description: {
+				story:
+					'Adds a custom "rating" widget by passing widgets={{ ...DefaultWidgets, rating: RatingWidget }}. The rating field uses widget: "rating" in the schema.',
+			},
+		},
+	},
+};
+
+/** Form that overrides the default "text" widget with a custom-styled one. */
+export const OverrideWidget: Story = {
+	name: 'Override Widget (custom text)',
+	args: {
+		schema: {
+			fields: {
+				name: {
+					widget: 'text',
+					label: 'Name',
+					placeholder: 'Your name (custom-styled)',
+					validation: {
+						type: 'required',
+						errorMessage: 'Name is required',
+					},
+				},
+				notes: {
+					widget: 'text',
+					label: 'Notes',
+					placeholder: 'Also using overridden text widget',
+				},
+			},
+		},
+		dataConfig: { name: '', notes: '' },
+		widgets: { ...DefaultWidgets, text: CustomStyledTextWidget },
+		onSave: async (data) => {
+			await new Promise((r) => setTimeout(r, 500));
+			console.log('Saved:', data);
+		},
+	},
+	parameters: {
+		docs: {
+			description: {
+				story:
+					'Overrides the built-in "text" widget with a custom component (different border/background). Pass widgets={{ ...DefaultWidgets, text: CustomStyledTextWidget }}.',
+			},
+		},
+	},
+};
+
+/**
+ * Custom widget with validation, visibility, and disabled driven by schema (same as DefaultWidgets).
+ * - Validation: rating is required; submit with it visible and empty to see error.
+ * - Visibility: rating is only visible when "Show rating?" is "Yes".
+ * - Disabled: rating is disabled when "Disable rating?" is "Yes".
+ */
+export const CustomWidgetValidationVisibilityDisabled: Story = {
+	name: 'Custom Widget (validation, visibility, disabled)',
+	args: {
+		schema: {
+			fields: {
+				showRating: {
+					widget: 'select',
+					label: 'Show rating?',
+					options: [
+						{ label: 'Yes', value: 'yes' },
+						{ label: 'No', value: 'no' },
+					],
+					placeholder: 'Choose...',
+				},
+				lockRating: {
+					widget: 'select',
+					label: 'Disable rating?',
+					options: [
+						{ label: 'Yes', value: 'yes' },
+						{ label: 'No', value: 'no' },
+					],
+					placeholder: 'Choose...',
+				},
+				rating: {
+					widget: 'rating',
+					label: 'Satisfaction (1–5)',
+					validation: {
+						operator: 'and',
+						rules: [
+							{ type: 'required', errorMessage: 'Please give a rating' },
+							{
+								type: 'min',
+								value: 1,
+								errorMessage: 'Please give a rating (at least 1 star)',
+							},
+						],
+					},
+					rules: [
+						{
+							effect: 'SHOW',
+							condition: {
+								field: 'showRating',
+								operator: '===',
+								value: 'yes',
+							},
+						},
+						{
+							effect: 'DISABLE',
+							condition: {
+								field: 'lockRating',
+								operator: '===',
+								value: 'yes',
+							},
+						},
+					],
+				},
+			},
+		},
+		dataConfig: {
+			showRating: 'no',
+			lockRating: 'no',
+			rating: 0,
+		},
+		widgets: { ...DefaultWidgets, rating: RatingWidget },
+		onSave: async (data) => {
+			await new Promise((r) => setTimeout(r, 500));
+			console.log('Saved:', data);
+		},
+	},
+	parameters: {
+		docs: {
+			description: {
+				story:
+					'Custom rating widget with schema-driven validation (required), visibility (SHOW when "Show rating?" is Yes), and disabled (DISABLE when "Disable rating?" is Yes). Verifies custom widgets receive error, isRequired, isDisabled, isVisible like DefaultWidgets.',
 			},
 		},
 	},

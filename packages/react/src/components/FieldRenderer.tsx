@@ -4,9 +4,10 @@ import {
 	useFormActions,
 	useFormMetaForField,
 	useFormIsDebug,
+	useWidgetRegistry,
 } from '@/providers/FormContext';
 import { useRenderCount } from '@/hooks/use-render-count';
-import { DefaultWidgets, type WidgetProps } from './widgets/Registry';
+import type { WidgetProps } from './widgets/Registry';
 import type { FieldState, LogicValue } from '@screamform/core';
 import type { ComponentType } from 'react';
 
@@ -50,6 +51,7 @@ const FieldRendererContent = memo(
 		renderCount,
 	}: FieldRendererContentProps) {
 		const { onChange, commit } = useFormActions();
+		const registry = useWidgetRegistry();
 
 		const finalError = submitError || state.error;
 
@@ -77,8 +79,8 @@ const FieldRendererContent = memo(
 			widgetKey = 'multi-select';
 		}
 
-		const Widget = (DefaultWidgets[widgetKey] ||
-			DefaultWidgets.text) as ComponentType<WidgetProps>;
+		const Widget = (registry[widgetKey] ||
+			registry.text) as ComponentType<WidgetProps>;
 
 		const widgetElement = (
 			<Widget

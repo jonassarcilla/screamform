@@ -7,6 +7,10 @@ import type {
 	FormStateSnapshot,
 	ToolbarSnapshot,
 } from '../hooks/use-form-engine';
+import {
+	DefaultWidgets,
+	type WidgetRegistry,
+} from '../components/widgets/Registry';
 
 /** Engine observables — kept out of context value so Storybook/DevTools don't call getOwnPropertyDescriptor on them. */
 export interface FormEngineRef {
@@ -26,6 +30,8 @@ export interface FormContextValue {
 	externalData?: Record<string, Array<{ label: string; value: unknown }>>;
 	/** When true, show render-count badges and profile info for debugging */
 	isDebug?: boolean;
+	/** Optional widget registry: merged with DefaultWidgets so you can add or override widgets. */
+	widgets?: Partial<WidgetRegistry>;
 }
 
 const FormContext = createContext<FormContextValue | null>(null);
@@ -91,6 +97,24 @@ export function useFormField(fieldKey: string): FieldState | undefined {
 export function useFormIsDebug(): boolean {
 	const context = useContext(FormContext);
 	return context?.isDebug ?? false;
+}
+
+/** Returns the merged widget registry (DefaultWidgets + context.widgets). Use in FieldRenderer or custom field rendering. */
+export function useWidgetRegistry(): WidgetRegistry {
+	const context = useContext(FormContext);
+	if (!context) {
+		return DefaultWidgets;
+	}
+	const custom = context.widgets;
+	if (!custom || Object.keys(custom).length === 0) {
+		return DefaultWidgets;
+	}
+	const merged: WidgetRegistry = { ...DefaultWidgets };
+	for (const key of Object.keys(custom)) {
+		const comp = custom[key];
+		if (comp) merged[key] = comp;
+	}
+	return merged;
 }
 
 export function useFormActions(): FormEngineActions {

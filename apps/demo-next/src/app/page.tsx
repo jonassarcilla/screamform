@@ -7,10 +7,80 @@ import {
   useFormEngine,
   FieldRenderer,
   useValue,
+  DefaultWidgets,
 } from "@screamform/react";
+import type { WidgetProps, WidgetRegistry } from "@screamform/react";
 import type { UISchema } from "@screamform/core";
 
 const dataConfig: Record<string, unknown> = {};
+
+/** Custom widget: 1–5 star rating. Uses types from @screamform/react. */
+function RatingWidget({
+  label,
+  value,
+  onChange,
+  error,
+  isRequired,
+  isDisabled,
+}: WidgetProps) {
+  const num = typeof value === "number" && Number.isFinite(value) ? value : 0;
+  const stars = [1, 2, 3, 4, 5];
+  return (
+    <div className="grid w-full gap-1.5">
+      <label className="text-sm font-medium leading-none">
+        {label ?? "Rating"}
+        {isRequired && <span className="text-destructive font-bold">*</span>}
+      </label>
+      <div className="flex gap-1">
+        {stars.map((n) => (
+          <button
+            key={n}
+            type="button"
+            disabled={isDisabled}
+            className={`rounded border px-2 py-1 text-sm transition-colors ${
+              n <= num
+                ? "border-amber-500 bg-amber-100 text-amber-800"
+                : "border-input bg-background hover:bg-muted"
+            }`}
+            onClick={() => onChange(n)}
+            aria-label={`${n} star${n > 1 ? "s" : ""}`}
+          >
+            ★
+          </button>
+        ))}
+      </div>
+      {error && (
+        <p className="text-[0.8rem] font-medium text-destructive">{error}</p>
+      )}
+    </div>
+  );
+}
+
+/** Override widget: custom-styled text. Same contract as default text. */
+function CustomStyledText(props: WidgetProps) {
+  const { label, value, onChange, error, isRequired, isDisabled, placeholder } =
+    props;
+  const val = value == null ? "" : String(value);
+  return (
+    <div className="grid w-full gap-1.5">
+      <label className="text-sm font-medium leading-none">
+        {label ?? ""}
+        {isRequired && <span className="text-destructive font-bold">*</span>}
+      </label>
+      <input
+        type="text"
+        value={val}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={isDisabled}
+        placeholder={placeholder ?? ""}
+        className="w-full rounded-lg border-2 border-dashed border-primary/30 bg-primary/5 px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none disabled:opacity-50"
+      />
+      {error && (
+        <p className="text-[0.8rem] font-medium text-destructive">{error}</p>
+      )}
+    </div>
+  );
+}
 
 const schema: UISchema = {
   fields: {
@@ -74,6 +144,35 @@ const schema: UISchema = {
       },
     },
   },
+};
+
+const customWidgetsSchema: UISchema = {
+  fields: {
+    productName: {
+      widget: "text",
+      label: "Product name (overridden text)",
+      placeholder: "Uses CustomStyledText",
+      validation: {
+        type: "required",
+        errorMessage: "Required",
+      },
+    },
+    satisfaction: {
+      widget: "rating",
+      label: "Satisfaction (1–5)",
+    },
+  },
+};
+
+const customWidgetsDataConfig: Record<string, unknown> = {
+  productName: "",
+  satisfaction: 0,
+};
+
+const customWidgetsRegistry: Partial<WidgetRegistry> = {
+  ...DefaultWidgets,
+  rating: RatingWidget,
+  text: CustomStyledText,
 };
 
 function CustomFormSection({
@@ -202,6 +301,25 @@ export default function Home() {
         <section>
           <h2 className="text-lg font-semibold mb-4">Custom form</h2>
           <CustomFormSection onSave={handleSave} />
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold mb-4">
+            Custom widget + override widget
+          </h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Uses <code className="rounded bg-muted px-1">DefaultWidgets</code>,{" "}
+            <code className="rounded bg-muted px-1">WidgetProps</code>, and{" "}
+            <code className="rounded bg-muted px-1">WidgetRegistry</code> from
+            @screamform/react. Custom &quot;rating&quot; widget and overridden
+            &quot;text&quot; widget.
+          </p>
+          <FormContainer
+            schema={customWidgetsSchema}
+            dataConfig={customWidgetsDataConfig}
+            widgets={customWidgetsRegistry}
+            onSave={handleSave}
+          />
         </section>
       </div>
     </main>

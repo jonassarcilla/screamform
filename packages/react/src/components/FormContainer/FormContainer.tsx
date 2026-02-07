@@ -13,6 +13,7 @@ import { Check } from 'lucide-react';
 import type { UISchema } from '@screamform/core';
 import { useFormEngine } from '../../hooks/use-form-engine';
 import { FormProvider } from '../../providers/FormContext';
+import type { WidgetRegistry } from '../widgets/Registry';
 import { useRenderCount } from '@/hooks/use-render-count';
 import { FieldRenderer } from '../FieldRenderer';
 import { HistoryToolbar } from '@/components/HistoryToolbar/HistoryToolbar';
@@ -87,6 +88,8 @@ interface FormContainerProps {
 	externalData?: Record<string, Array<{ label: string; value: unknown }>>;
 	isDebug?: boolean;
 	onSave?: (data: Record<string, unknown>) => Promise<void>;
+	/** Optional widget registry: merged with defaults so you can add or override widgets. */
+	widgets?: Partial<WidgetRegistry>;
 	/** Rendered inside FormProvider (e.g. toolbar that uses useForm().updateFieldSchema) */
 	children?: ReactNode;
 	/** Called on each commit when profiling (isDebug). Receives id, phase, actualDuration, baseDuration, etc. */
@@ -99,6 +102,7 @@ export function FormContainer({
 	externalData,
 	isDebug,
 	onSave = async (data) => console.log('Default Save (No-op):', data),
+	widgets,
 	children,
 	onProfile,
 }: FormContainerProps) {
@@ -193,8 +197,9 @@ export function FormContainer({
 			actions,
 			externalData,
 			isDebug: !!isDebug,
+			widgets,
 		}),
-		[actions, externalData, isDebug],
+		[actions, externalData, isDebug, widgets],
 	);
 
 	const canSave = !!onSave && hasFormChanges && !isFormDirty && !isSubmitting;
