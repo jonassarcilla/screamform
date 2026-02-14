@@ -135,15 +135,11 @@ export const WithProfiler: Story = {
 	args: {
 		isDebug: true,
 		onProfile: (
-			id: string,
-			phase: string,
-			actualDuration: number,
-			baseDuration: number,
-		) => {
-			console.log(
-				`[Profiler] ${id} ${phase} — actual: ${actualDuration.toFixed(2)}ms, base: ${baseDuration.toFixed(2)}ms`,
-			);
-		},
+			_id: string,
+			_phase: string,
+			_actualDuration: number,
+			_baseDuration: number,
+		) => {},
 		schema: {
 			fields: {
 				title: {
@@ -158,9 +154,8 @@ export const WithProfiler: Story = {
 			},
 		},
 		dataConfig: { title: '', budget: 0 },
-		onSave: async (data) => {
+		onSave: async (_data) => {
 			await new Promise((r) => setTimeout(r, 500));
-			console.log('Saved:', data);
 		},
 	},
 };
@@ -220,9 +215,8 @@ export const WithSelectInput: Story = {
 			title: 'My Project',
 			status: 'draft',
 		},
-		onSave: async (data) => {
+		onSave: async (_data) => {
 			await new Promise((r) => setTimeout(r, 500));
-			console.log('Saved:', data);
 		},
 	},
 };
@@ -243,9 +237,8 @@ export const TextInputWithAutoSuggestion: Story = {
 			},
 		},
 		dataConfig: { fruit: '' },
-		onSave: async (data) => {
+		onSave: async (_data) => {
 			await new Promise((r) => setTimeout(r, 500));
-			console.log('Saved:', data);
 		},
 	},
 };
@@ -277,9 +270,8 @@ export const WithMultiSelect: Story = {
 			name: '',
 			tags: ['react', 'typescript'],
 		},
-		onSave: async (data) => {
+		onSave: async (_data) => {
 			await new Promise((r) => setTimeout(r, 500));
-			console.log('Saved:', data);
 		},
 	},
 };
@@ -324,9 +316,8 @@ export const WithDescriptions: Story = {
 			budget: 50000,
 			status: 'draft',
 		},
-		onSave: async (data) => {
+		onSave: async (_data) => {
 			await new Promise((r) => setTimeout(r, 500));
-			console.log('Saved:', data);
 		},
 	},
 };
@@ -358,9 +349,8 @@ export const RequiredSelectEmptyOptions: Story = {
 			name: '',
 			category: undefined,
 		},
-		onSave: async (data) => {
+		onSave: async (_data) => {
 			await new Promise((r) => setTimeout(r, 500));
-			console.log('Saved:', data);
 		},
 	},
 };
@@ -392,9 +382,8 @@ export const SearchableSingleSelect: Story = {
 			},
 		},
 		dataConfig: { country: undefined },
-		onSave: async (data) => {
+		onSave: async (_data) => {
 			await new Promise((r) => setTimeout(r, 500));
-			console.log('Saved:', data);
 		},
 	},
 };
@@ -427,9 +416,8 @@ export const SearchableMultiSelect: Story = {
 			},
 		},
 		dataConfig: { skills: [] },
-		onSave: async (data) => {
+		onSave: async (_data) => {
 			await new Promise((r) => setTimeout(r, 500));
-			console.log('Saved:', data);
 		},
 	},
 };
@@ -477,9 +465,8 @@ export const ExcludeAndDisabledOptions: Story = {
 			},
 		},
 		dataConfig: { status: undefined, tags: [] },
-		onSave: async (data) => {
+		onSave: async (_data) => {
 			await new Promise((r) => setTimeout(r, 500));
-			console.log('Saved:', data);
 		},
 	},
 };
@@ -488,7 +475,7 @@ export const ExcludeAndDisabledOptions: Story = {
 function UpdateSchemaDemo() {
 	const { updateFieldSchema } = useForm();
 	return (
-		<div className="flex flex-wrap items-center gap-2 rounded-md border border-dashed border-muted-foreground/30 bg-muted/30 px-3 py-2 text-sm">
+		<div className="flex flex-wrap items-center gap-2 rounded-md border border-muted-foreground/30 border-dashed bg-muted/30 px-3 py-2 text-sm">
 			<span className="font-medium text-muted-foreground">
 				updateFieldSchema:
 			</span>
@@ -557,9 +544,8 @@ export const UpdateFieldSchema: Story = {
 			},
 		},
 		dataConfig: { title: '', status: undefined },
-		onSave: async (data) => {
+		onSave: async (_data) => {
 			await new Promise((r) => setTimeout(r, 500));
-			console.log('Saved:', data);
 		},
 	},
 	render: (args) => (
@@ -573,7 +559,7 @@ export const UpdateFieldSchema: Story = {
 function UpdateLabelPlaceholderDescriptionDemo() {
 	const { updateFieldSchema } = useForm();
 	return (
-		<div className="flex flex-wrap items-center gap-2 rounded-md border border-dashed border-muted-foreground/30 bg-muted/30 px-3 py-2 text-sm">
+		<div className="flex flex-wrap items-center gap-2 rounded-md border border-muted-foreground/30 border-dashed bg-muted/30 px-3 py-2 text-sm">
 			<span className="font-medium text-muted-foreground">
 				updateFieldSchema (label / placeholder / description):
 			</span>
@@ -629,9 +615,8 @@ export const UpdateLabelPlaceholderDescription: Story = {
 			},
 		},
 		dataConfig: { title: '' },
-		onSave: async (data) => {
+		onSave: async (_data) => {
 			await new Promise((r) => setTimeout(r, 500));
-			console.log('Saved:', data);
 		},
 	},
 	render: (args) => (
@@ -687,9 +672,8 @@ export const DynamicOptionsFromExternalData: Story = {
 				{ label: 'Form', value: 'form' },
 			],
 		},
-		onSave: async (data) => {
+		onSave: async (_data) => {
 			await new Promise((r) => setTimeout(r, 500));
-			console.log('Saved:', data);
 		},
 	},
 };
@@ -700,9 +684,8 @@ export const MultipleFields: Story = {
 	args: {
 		isDebug: true,
 		...createManyFieldsSchema(30),
-		onSave: async (data) => {
+		onSave: async (_data) => {
 			await new Promise((r) => setTimeout(r, 500));
-			console.log('Saved:', data);
 		},
 	},
 	parameters: {
@@ -721,9 +704,8 @@ export const MultipleFields50: Story = {
 	args: {
 		isDebug: true,
 		...createManyFieldsSchema(50),
-		onSave: async (data) => {
+		onSave: async (_data) => {
 			await new Promise((r) => setTimeout(r, 500));
-			console.log('Saved:', data);
 		},
 	},
 	parameters: {
@@ -746,7 +728,6 @@ function RatingWidget({
 	error,
 	isRequired,
 	isDisabled,
-	placeholder,
 }: WidgetProps) {
 	const num = typeof value === 'number' && Number.isFinite(value) ? value : 0;
 	const stars = [1, 2, 3, 4, 5];
@@ -797,7 +778,7 @@ function CustomStyledTextWidget(props: WidgetProps) {
 				onChange={(e) => onChange(e.target.value)}
 				disabled={isDisabled}
 				placeholder={placeholder ?? ''}
-				className="w-full rounded-lg border-2 border-dashed border-primary/30 bg-primary/5 px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none disabled:opacity-50"
+				className="w-full rounded-lg border-2 border-primary/30 border-dashed bg-primary/5 px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none disabled:opacity-50"
 			/>
 		</FieldWrapper>
 	);
@@ -825,9 +806,8 @@ export const CustomWidget: Story = {
 		},
 		dataConfig: { title: '', satisfaction: 0 },
 		widgets: { ...DefaultWidgets, rating: RatingWidget },
-		onSave: async (data) => {
+		onSave: async (_data) => {
 			await new Promise((r) => setTimeout(r, 500));
-			console.log('Saved:', data);
 		},
 	},
 	parameters: {
@@ -864,9 +844,8 @@ export const OverrideWidget: Story = {
 		},
 		dataConfig: { name: '', notes: '' },
 		widgets: { ...DefaultWidgets, text: CustomStyledTextWidget },
-		onSave: async (data) => {
+		onSave: async (_data) => {
 			await new Promise((r) => setTimeout(r, 500));
-			console.log('Saved:', data);
 		},
 	},
 	parameters: {
@@ -949,9 +928,8 @@ export const CustomWidgetValidationVisibilityDisabled: Story = {
 			rating: 0,
 		},
 		widgets: { ...DefaultWidgets, rating: RatingWidget },
-		onSave: async (data) => {
+		onSave: async (_data) => {
 			await new Promise((r) => setTimeout(r, 500));
-			console.log('Saved:', data);
 		},
 	},
 	parameters: {

@@ -62,7 +62,7 @@ function ProfileFooter({
 	const snapshot = profileRef.current?.snapshot ?? null;
 	return (
 		<div
-			className="text-xs font-mono text-muted-foreground bg-muted/50 rounded px-3 py-2 border border-dashed space-y-1"
+			className="space-y-1 rounded border border-dashed bg-muted/50 px-3 py-2 font-mono text-muted-foreground text-xs"
 			title="React Profiler + render counts"
 		>
 			<div>
@@ -101,6 +101,7 @@ export function FormContainer({
 	dataConfig,
 	externalData,
 	isDebug,
+	// biome-ignore lint/suspicious/noConsoleLog: intentional default no-op with debug feedback
 	onSave = async (data) => console.log('Default Save (No-op):', data),
 	widgets,
 	children,
@@ -225,12 +226,12 @@ export function FormContainer({
 	const formBody = (
 		<>
 			<div className="flex items-center justify-between border-b pb-4">
-				<h2 className="text-xl font-bold">Form Editor</h2>
+				<h2 className="font-bold text-xl">Form Editor</h2>
 				<HistoryToolbar />
 			</div>
 
 			{submitErrors?._form && (
-				<div className="p-3 text-sm bg-destructive/10 text-destructive border border-destructive/20 rounded-md">
+				<div className="rounded-md border border-destructive/20 bg-destructive/10 p-3 text-destructive text-sm">
 					{submitErrors._form}
 				</div>
 			)}
@@ -241,10 +242,10 @@ export function FormContainer({
 				<FormFields fieldKeys={fieldKeys} />
 			</div>
 
-			<div className="pt-6 border-t space-y-3">
+			<div className="space-y-3 border-t pt-6">
 				<div className="flex items-center justify-end gap-3">
 					{isFormDirty && !isSubmitting && (
-						<span className="text-xs text-amber-600 font-medium animate-pulse mr-auto">
+						<span className="mr-auto animate-pulse font-medium text-amber-600 text-xs">
 							Finish editing to unlock save...
 						</span>
 					)}
@@ -253,7 +254,7 @@ export function FormContainer({
 						type="button"
 						onClick={handleReset}
 						disabled={!canReset}
-						className="px-4 py-2 text-sm font-medium transition-colors hover:text-primary disabled:opacity-50"
+						className="px-4 py-2 font-medium text-sm transition-colors hover:text-primary disabled:opacity-50"
 					>
 						Reset
 					</button>
@@ -262,18 +263,17 @@ export function FormContainer({
 						type="button"
 						onClick={handleSave}
 						disabled={!canSave}
-						className={`px-6 py-2 rounded-lg font-medium transition-all flex items-center gap-2 min-w-[140px] justify-center
-								${
-									showSuccess
-										? 'bg-green-600 text-white'
-										: canSave
-											? 'bg-primary text-primary-foreground hover:opacity-90 shadow-sm'
-											: 'bg-muted text-muted-foreground opacity-50 cursor-not-allowed'
-								}`}
+						className={`flex min-w-[140px] items-center gap-2 rounded-lg px-6 py-2 font-medium transition-all justify-center${
+							showSuccess
+								? 'bg-green-600 text-white'
+								: canSave
+									? 'bg-primary text-primary-foreground shadow-sm hover:opacity-90'
+									: 'cursor-not-allowed bg-muted text-muted-foreground opacity-50'
+						}`}
 					>
 						{isSubmitting ? (
 							<>
-								<span className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+								<span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
 								Saving...
 							</>
 						) : showSuccess ? (
@@ -292,7 +292,7 @@ export function FormContainer({
 
 	return (
 		<FormProvider value={contextValue}>
-			<div className="max-w-2xl mx-auto p-6 border rounded-xl shadow-lg bg-background space-y-6">
+			<div className="mx-auto max-w-2xl space-y-6 rounded-xl border bg-background p-6 shadow-lg">
 				{isDebug ? (
 					<Profiler id="FormContainer" onRender={handleProfile}>
 						{formBody}

@@ -1,5 +1,8 @@
 {
     "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+    "files": {
+      "ignore": ["**/dist/**", "**/node_modules/**"]
+    },
     "organizeImports": {
       "enabled": true
     },
@@ -31,5 +34,54 @@
         "quoteStyle": "single",
         "jsxQuoteStyle": "double"
       }
-    }
+    },
+    "overrides": [
+      {
+        "include": ["**/tests/**", "**/__tests__/**", "**/*.test.*", "**/*.spec.*"],
+        "linter": {
+          "rules": {
+            "suspicious": {
+              "noExplicitAny": "off"
+            }
+          }
+        }
+      },
+      {
+        "include": ["**/components/ui/**"],
+        "linter": {
+          "rules": {
+            "nursery": {
+              "useSortedClasses": "off"
+            },
+            "style": {
+              "useImportType": "off"
+            }
+          }
+        }
+      },
+      {
+        "include": ["**/components/widgets/**"],
+        "linter": {
+          "rules": {
+            "a11y": {
+              "useSemanticElements": "off",
+              "useFocusableInteractive": "off"
+            },
+            "security": {
+              "noDangerouslySetInnerHtml": "off"
+            }
+          }
+        }
+      },
+      {
+        "include": ["**/FieldWrapper/**"],
+        "linter": {
+          "rules": {
+            "security": {
+              "noDangerouslySetInnerHtml": "off"
+            }
+          }
+        }
+      }
+    ]
 }

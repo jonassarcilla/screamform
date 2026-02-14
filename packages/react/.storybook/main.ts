@@ -1,8 +1,8 @@
 import type { StorybookConfig } from '@storybook/react-vite';
 import tailwindcss from '@tailwindcss/vite';
-import path from 'path';
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
+import path from 'node:path';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import reactScan from '@react-scan/vite-plugin-react-scan';
 
 const dirname_ = dirname(fileURLToPath(import.meta.url));

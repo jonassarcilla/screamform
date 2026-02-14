@@ -1,9 +1,19 @@
-import React, { useMemo, useState, useRef, useEffect } from 'react';
-import { Check, ChevronsUpDown, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { buttonVariants } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { FieldWrapper } from '@/components/FieldWrapper';
+import { Badge } from '@/components/ui/badge';
+import { buttonVariants } from '@/components/ui/button';
+import {
+	Command,
+	CommandEmpty,
+	CommandInput,
+	CommandItem,
+	CommandList,
+} from '@/components/ui/command';
+import { inputBaseClassName } from '@/components/ui/input';
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from '@/components/ui/popover';
 import {
 	Select,
 	SelectContent,
@@ -12,21 +22,11 @@ import {
 	SelectValue,
 	selectTriggerClassName,
 } from '@/components/ui/select';
-import {
-	Command,
-	CommandEmpty,
-	CommandInput,
-	CommandItem,
-	CommandList,
-} from '@/components/ui/command';
-import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from '@/components/ui/popover';
-import { inputBaseClassName } from '@/components/ui/input';
-import type { WidgetProps } from '../Registry';
+import { cn } from '@/lib/utils';
 import type { LogicValue } from '@screamform/core';
+import { Check, ChevronsUpDown, X } from 'lucide-react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
+import type { WidgetProps } from '../Registry';
 
 /** Single-select only: when options are empty and required, inject this option and use as default */
 const EMPTY_REQUIRED_OPTION = { label: 'None', value: 'none' } as const;
@@ -107,7 +107,7 @@ export function SelectInput({
 				type="button"
 				className={cn(
 					buttonVariants({ variant: 'outline' }),
-					'w-full justify-between h-auto min-h-10 text-left font-normal',
+					'h-auto min-h-10 w-full justify-between text-left font-normal',
 					className,
 				)}
 				{...props}
@@ -187,6 +187,7 @@ export function SelectInput({
 		}
 	}, [multiple, normalizedSingle, normalizedMulti]);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: formVersion acts as a reset trigger; value and multiple are read inside but intentionally excluded to avoid re-syncing on every change
 	useEffect(() => {
 		// When formVersion changes, the global 'Reset' was clicked.
 		const engineValue = value;
@@ -212,7 +213,7 @@ export function SelectInput({
 		)
 			return;
 		onChange('none' as LogicValue);
-	}, [multiple, options?.length, isRequired, value, onChange]);
+	}, [multiple, options, isRequired, value, onChange]);
 
 	const isDirtySingle =
 		!autoSave &&
@@ -360,7 +361,7 @@ export function SelectInput({
 											}}
 											aria-label={`Remove ${optionList.find((o: { label: string; value: unknown }) => String(o.value) === String(v))?.label ?? v}`}
 										>
-											<X className="h-3 w-3 pointer-events-none" aria-hidden />
+											<X className="pointer-events-none h-3 w-3" aria-hidden />
 										</span>
 									</Badge>
 								))
@@ -372,8 +373,9 @@ export function SelectInput({
 					</SelectInputMultiTrigger>
 					{multiOpen && (
 						<div
-							className="absolute left-0 right-0 top-full z-50 mt-1 flex max-h-[300px] flex-col overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md"
+							className="absolute top-full right-0 left-0 z-50 mt-1 flex max-h-[300px] flex-col overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md"
 							role="listbox"
+							tabIndex={-1}
 						>
 							{searchable && (
 								<div className="border-b p-1">
@@ -390,11 +392,11 @@ export function SelectInput({
 							)}
 							<div className="flex-1 overflow-y-auto p-1">
 								{optionList.length === 0 ? (
-									<div className="py-4 text-center text-sm text-muted-foreground">
+									<div className="py-4 text-center text-muted-foreground text-sm">
 										No options
 									</div>
 								) : filteredOptions.length === 0 ? (
-									<div className="py-4 text-center text-sm text-muted-foreground">
+									<div className="py-4 text-center text-muted-foreground text-sm">
 										No results
 									</div>
 								) : (
@@ -416,7 +418,7 @@ export function SelectInput({
 														'flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-2 text-left text-sm outline-none hover:bg-accent hover:text-accent-foreground',
 														isSelected && 'bg-accent',
 														isDisabled &&
-															'cursor-not-allowed opacity-50 pointer-events-none',
+															'pointer-events-none cursor-not-allowed opacity-50',
 													)}
 													onClick={() =>
 														!isDisabled && handleToggleMultiple(opt.value)
@@ -594,7 +596,7 @@ export function SelectInput({
 					<SelectTrigger asChild>
 						<SelectInputSingleTrigger
 							className={cn(
-								'w-full pointer-events-auto',
+								'pointer-events-auto w-full',
 								error && 'border-destructive',
 							)}
 						>
@@ -606,7 +608,7 @@ export function SelectInput({
 						side="bottom"
 						align="start"
 						sideOffset={0}
-						className="z-100 bg-popover border shadow-md"
+						className="z-100 border bg-popover shadow-md"
 					>
 						{singleSelectOptions.map(
 							(opt: { label: string; value: unknown }) => (

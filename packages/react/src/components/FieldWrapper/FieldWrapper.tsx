@@ -119,7 +119,7 @@ export function FieldWrapper({
 			<div className="flex w-full items-center justify-between gap-2">
 				<Label className={cn(error && 'text-destructive')}>
 					{label}{' '}
-					{isRequired && <span className="text-destructive font-bold">*</span>}
+					{isRequired && <span className="font-bold text-destructive">*</span>}
 				</Label>
 				<div className="flex shrink-0 items-center gap-0.5">
 					{showCommitDiscard && (
@@ -129,7 +129,7 @@ export function FieldWrapper({
 								size="icon"
 								variant="ghost"
 								onClick={onCommit}
-								className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+								className="h-8 w-8 text-green-600 hover:bg-green-50 hover:text-green-700"
 								title="Commit change"
 							>
 								<Check className="h-4 w-4" />
@@ -153,7 +153,7 @@ export function FieldWrapper({
 									type="button"
 									size="icon"
 									variant="ghost"
-									className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/50"
+									className="h-8 w-8 text-muted-foreground hover:bg-muted/50 hover:text-foreground"
 									aria-label="Field description"
 								>
 									<Info className="h-4 w-4" aria-hidden />
@@ -176,7 +176,7 @@ export function FieldWrapper({
 									!urlLoading &&
 									!urlError && (
 										<div
-											className="[&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_a]:text-primary [&_a]:underline [&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_pre]:rounded [&_pre]:bg-muted [&_pre]:p-2 [&_pre]:overflow-x-auto"
+											className="[&_a]:text-primary [&_a]:underline [&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_ol]:list-decimal [&_ol]:pl-4 [&_p:last-child]:mb-0 [&_p]:mb-2 [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:bg-muted [&_pre]:p-2 [&_ul]:list-disc [&_ul]:pl-4"
 											dangerouslySetInnerHTML={{ __html: descriptionHtml }}
 										/>
 									)}
@@ -196,7 +196,7 @@ export function FieldWrapper({
 
 			{/* Row 3: Error */}
 			{error && (
-				<p className="text-[0.8rem] font-medium text-destructive animate-in fade-in duration-200">
+				<p className="fade-in animate-in font-medium text-[0.8rem] text-destructive duration-200">
 					{error}
 				</p>
 			)}

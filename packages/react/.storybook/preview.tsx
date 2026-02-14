@@ -1,4 +1,3 @@
-import React from 'react';
 import type { Preview } from '@storybook/react';
 import '../src/styles/global.css';
 
@@ -15,7 +14,7 @@ const preview: Preview = {
 	// 🟢 Add this decorator to ensure a clean rendering context
 	decorators: [
 		(Story) => (
-			<div className="w-[400px] min-h-[400px] p-4 font-sans text-foreground antialiased">
+			<div className="min-h-[400px] w-[400px] p-4 font-sans text-foreground antialiased">
 				<Story />
 			</div>
 		),

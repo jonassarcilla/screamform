@@ -1,5 +1,5 @@
 import { useRef, useEffect, useMemo } from 'react';
-import { observable, observe } from '@legendapp/state';
+import { batch, observable, observe } from '@legendapp/state';
 import { useObservable } from '@legendapp/state/react';
 import {
 	getFieldState,
@@ -82,6 +82,7 @@ export function useFormEngine(
 	dataConfig: FormDataRecord = {},
 	options?: { isDebug?: boolean },
 ): FormEngineResult {
+	const isDebug = !!options?.isDebug;
 	const lastSavedDataRef = useRef<FormDataRecord>(
 		(processSubmission(schemaProp, dataConfig).data ?? {}) as FormDataRecord,
 	);
@@ -163,12 +164,9 @@ export function useFormEngine(
 				const committedData = state$.committedData.get();
 				const saveVersion = state$.saveVersion.get();
 
-				const formState = getFieldState(
-					schema,
-					workingData,
-					dataConfig,
-					options,
-				);
+				const formState = getFieldState(schema, workingData, dataConfig, {
+					isDebug,
+				});
 				const fields = formState.fields as Record<string, FieldState>;
 				const submitErrors = state$.submitErrors.get();
 				const displayFields: Record<string, FieldState> = {};
@@ -178,7 +176,7 @@ export function useFormEngine(
 					const hasCommitted = key in committedData;
 					const finalValue = hasCommitted
 						? committedData[key]
-						: (dataConfig[key] ?? '');
+						: (dataConfig[key] ?? base.value);
 					const submitError = submitErrors?.[key] ?? null;
 					displayFields[key] = {
 						...base,
@@ -232,7 +230,7 @@ export function useFormEngine(
 					hasHistoryEntries: history.length > 1,
 				};
 			}),
-		[state$, dataConfig, options?.isDebug],
+		[state$, dataConfig, isDebug],
 	);
 
 	const formFieldStates$ = useMemo(() => {
@@ -317,26 +315,33 @@ export function useFormEngine(
 				const result = captureInput(key, value, prev[key], fieldSchema);
 				const newValue = result.value;
 
-				if (fieldSchema.autoSave !== false) {
-					const history = state$.history.get();
-					const currentIndex = state$.currentIndex.get();
-					const prevCommit = state$.committedData.get();
-					const nextCommit = { ...prevCommit, [key]: newValue };
-					const newHistory = history.slice(0, currentIndex + 1);
-					const updatedHistory = [...newHistory, nextCommit];
-					state$.committedData.set(nextCommit);
-					state$.history.set(updatedHistory);
-					state$.currentIndex.set(updatedHistory.length - 1);
-				}
-				state$.workingData.set({ ...prev, [key]: newValue });
+				// Batch all observable writes so formState$ recomputes only once
+				// with both workingData AND committedData in their final state.
+				// Without batch, committedData.set() triggers a recomputation
+				// where workingData still holds the stale value, producing a
+				// transient (but visible) validation error.
+				batch(() => {
+					if (fieldSchema.autoSave !== false) {
+						const history = state$.history.get();
+						const currentIndex = state$.currentIndex.get();
+						const prevCommit = state$.committedData.get();
+						const nextCommit = { ...prevCommit, [key]: newValue };
+						const newHistory = history.slice(0, currentIndex + 1);
+						const updatedHistory = [...newHistory, nextCommit];
+						state$.committedData.set(nextCommit);
+						state$.history.set(updatedHistory);
+						state$.currentIndex.set(updatedHistory.length - 1);
+					}
+					state$.workingData.set({ ...prev, [key]: newValue });
 
-				// Clear this field's submit error when user edits so live validation can show
-				const currentSubmitErrors = state$.submitErrors.get();
-				if (currentSubmitErrors?.[key]) {
-					const next = { ...currentSubmitErrors };
-					delete next[key];
-					state$.submitErrors.set(Object.keys(next).length > 0 ? next : null);
-				}
+					// Clear this field's submit error when user edits so live validation can show
+					const currentSubmitErrors = state$.submitErrors.get();
+					if (currentSubmitErrors?.[key]) {
+						const next = { ...currentSubmitErrors };
+						delete next[key];
+						state$.submitErrors.set(Object.keys(next).length > 0 ? next : null);
+					}
+				});
 			},
 
 			commit: (key: string, value?: unknown) => {
@@ -352,9 +357,11 @@ export function useFormEngine(
 				const currentIndex = state$.currentIndex.get();
 				const next = { ...prev, [key]: valueToCommit };
 				const newHistory = [...history.slice(0, currentIndex + 1), next];
-				state$.committedData.set(next);
-				state$.history.set(newHistory);
-				state$.currentIndex.set(newHistory.length);
+				batch(() => {
+					state$.committedData.set(next);
+					state$.history.set(newHistory);
+					state$.currentIndex.set(newHistory.length);
+				});
 			},
 
 			submit: async (onSave: (data: FormDataRecord) => Promise<void>) => {
@@ -382,7 +389,7 @@ export function useFormEngine(
 				const hasFormChanges = formState$.get().hasFormChanges;
 				if (!hasFormChanges) {
 					if (options?.isDebug) {
-						console.log(
+						console.info(
 							'⏩ No changes since last save. Skipping network request.',
 						);
 					}

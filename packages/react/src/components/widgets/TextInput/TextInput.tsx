@@ -52,11 +52,11 @@ export function TextInput({
 	const hasSuggestions = Boolean(autoSuggestion?.length);
 	const filteredSuggestions =
 		hasSuggestions && draft.trim() !== ''
-			? autoSuggestion!.filter((s) =>
+			? autoSuggestion?.filter((s) =>
 					s.toLowerCase().includes(draft.trim().toLowerCase()),
 				)
 			: hasSuggestions
-				? autoSuggestion!
+				? (autoSuggestion ?? [])
 				: [];
 	// Last value we committed; used so isDirty becomes false immediately on commit
 	const [lastCommitted, setLastCommitted] = useState<string | null>(null);
@@ -73,6 +73,7 @@ export function TextInput({
 		}
 	}, [normalizedValue]);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: formVersion acts as a reset trigger; value is read inside but intentionally excluded to avoid re-syncing on every keystroke
 	useEffect(() => {
 		// When formVersion changes, the global 'Reset' was clicked.
 		// We must force the local draft to match the engine's truth.
@@ -146,7 +147,7 @@ export function TextInput({
 			onFocus={handleFocus}
 			autoComplete={hasSuggestions ? 'off' : undefined}
 			className={cn(
-				'transition-colors w-full min-w-0',
+				'w-full min-w-0 transition-colors',
 				error && 'border-destructive focus-visible:ring-destructive',
 			)}
 		/>
@@ -177,19 +178,19 @@ export function TextInput({
 						<div className="min-w-0 flex-1">{inputEl}</div>
 					</PopoverAnchor>
 					<PopoverContent
-						className="w-(--radix-popover-trigger-width) max-h-[200px] overflow-y-auto p-0"
+						className="max-h-[200px] w-(--radix-popover-trigger-width) overflow-y-auto p-0"
 						align="start"
 						sideOffset={4}
 						onOpenAutoFocus={(e) => e.preventDefault()}
 					>
 						{filteredSuggestions.length === 0 ? (
-							<div className="py-3 px-2 text-center text-sm text-muted-foreground">
+							<div className="px-2 py-3 text-center text-muted-foreground text-sm">
 								No suggestions
 							</div>
 						) : (
-							<ul className="py-1" role="listbox">
-								{filteredSuggestions.map((item, i) => (
-									<li key={i} role="option">
+							<ul className="py-1">
+								{filteredSuggestions.map((item) => (
+									<li key={item}>
 										<button
 											type="button"
 											className="w-full cursor-pointer px-3 py-2 text-left text-sm outline-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"

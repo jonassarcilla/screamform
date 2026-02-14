@@ -53,10 +53,11 @@ const coerceValue = (value: unknown, widget: string): unknown => {
 			if (typeof value === 'string') return value === 'true';
 			return !!value;
 		case 'number-input':
-		case 'slider':
+		case 'slider': {
 			const parsed =
 				typeof value === 'string' ? Number.parseFloat(value) : value;
-			return isNaN(parsed as number) ? 0 : parsed;
+			return Number.isNaN(parsed as number) ? 0 : parsed;
+		}
 		default:
 			return value;
 	}

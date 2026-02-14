@@ -7,7 +7,7 @@ export function HistoryToolbar() {
 	const { canUndo, canRedo, isFormDirty } = useFormMeta();
 
 	return (
-		<div className="flex items-center justify-between p-2 mb-4 border rounded-md bg-muted/30">
+		<div className="mb-4 flex items-center justify-between rounded-md border bg-muted/30 p-2">
 			<div className="flex items-center gap-2">
 				<Button
 					variant="ghost"
@@ -33,7 +33,7 @@ export function HistoryToolbar() {
 			</div>
 
 			{/* Status Message */}
-			<div className="flex items-center gap-2 text-xs text-muted-foreground">
+			<div className="flex items-center gap-2 text-muted-foreground text-xs">
 				{isFormDirty ? (
 					<>
 						<Info className="h-3 w-3 text-blue-500" />

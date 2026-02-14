@@ -64,7 +64,7 @@ export function NumberInput({
 	const parseValue = (val: string): number | undefined => {
 		if (val === '') return undefined;
 		const num = Number(val);
-		return isNaN(num) ? undefined : num;
+		return Number.isNaN(num) ? undefined : num;
 	};
 
 	const handleCommit = () => {
@@ -119,7 +119,7 @@ export function NumberInput({
 				step={(uiProps?.step as string | number | undefined) ?? '1'}
 				onChange={handleChange}
 				className={cn(
-					'transition-colors w-full min-w-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none',
+					'w-full min-w-0 transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
 					error && 'border-destructive focus-visible:ring-destructive',
 				)}
 			/>

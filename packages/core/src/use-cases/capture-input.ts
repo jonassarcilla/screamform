@@ -48,13 +48,13 @@ export const captureInput = <T = unknown>(
 
 		if (hasChanged) {
 			console.group(`[FormEngine] [INPUT_CHANGE]: ${key}`);
-			console.log(
-				`%c Previous:`,
+			console.info(
+				'%c Previous:',
 				'color: #9E9E9E; font-weight: bold;',
 				oldValue,
 			);
-			console.log(
-				`%c Current: `,
+			console.info(
+				'%c Current: ',
 				'color: #4CAF50; font-weight: bold;',
 				newValue,
 			);

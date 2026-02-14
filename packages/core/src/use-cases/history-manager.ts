@@ -32,7 +32,10 @@ export const historyManager = {
 
 	undo: (state: HistoryState): HistoryState => {
 		if (state.past.length === 0) return state;
-		const previous = state.past[state.past.length - 1]!;
+		const previous = state.past[state.past.length - 1] as Record<
+			string,
+			unknown
+		>;
 		return {
 			past: state.past.slice(0, -1),
 			present: previous,
@@ -42,7 +45,7 @@ export const historyManager = {
 
 	redo: (state: HistoryState): HistoryState => {
 		if (state.future.length === 0) return state;
-		const next = state.future[0]!;
+		const next = state.future[0] as Record<string, unknown>;
 		return {
 			past: [...state.past, state.present],
 			present: next,

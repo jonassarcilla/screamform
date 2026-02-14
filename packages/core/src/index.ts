@@ -27,6 +27,32 @@ export { discardChanges } from './use-cases/discard-changes';
 export * from './use-cases/types';
 
 /**
+ * BUILDER: Fluent API for schema construction
+ */
+export {
+	FormBuilder,
+	FieldBuilder,
+	SectionBuilder,
+	createTextField,
+	createNumberField,
+	createSelectField,
+	createCheckboxField,
+	createCustomField,
+	createSection,
+} from './builder';
+export type { ConditionTuple } from './builder';
+
+/**
+ * SECURITY & COMPLIANCE: Utilities
+ */
+export { deepFreeze } from './utils/deep-freeze';
+export { getPIIFields } from './utils/get-pii-fields';
+export { validateSchema } from './utils/validate-schema';
+export type { SchemaValidationIssue } from './utils/validate-schema';
+export { validateSection } from './utils/validate-section';
+export type { SectionValidationResult } from './utils/validate-section';
+
+/**
  * UTILS: Helpful constants
  */
 export const ENGINE_VERSION = '1.0.0';

@@ -70,7 +70,7 @@ const FieldRendererContent = memo(
 			excludeSet != null && Array.isArray(rawOptions)
 				? rawOptions.filter(
 						(opt: { label: string; value: unknown }) =>
-							!excludeSet!.has(String(opt.value)),
+							!excludeSet?.has(String(opt.value)),
 					)
 				: rawOptions;
 
@@ -109,6 +109,8 @@ const FieldRendererContent = memo(
 						? state.uiProps.autoSuggestion
 						: undefined
 				}
+				// biome-ignore lint/correctness/noChildrenProp: passes FieldState.children (nested field states), not React children
+				children={state.children}
 				dataType={state.dataType}
 				dataTypes={state.dataTypes}
 				testId={
@@ -124,7 +126,7 @@ const FieldRendererContent = memo(
 			return (
 				<div className="relative">
 					<span
-						className="absolute -top-1 -right-1 z-10 rounded bg-amber-500 px-1.5 py-0.5 text-[10px] font-mono text-white"
+						className="-top-1 -right-1 absolute z-10 rounded bg-amber-500 px-1.5 py-0.5 font-mono text-[10px] text-white"
 						title={`${fieldKey}: ${renderCount} renders`}
 					>
 						R:{renderCount}

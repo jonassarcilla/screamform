@@ -66,7 +66,7 @@ describe('Domain: Schema Types', () => {
 			},
 		};
 
-		const uiProps = schema.fields['phone']?.uiProps;
+		const uiProps = schema.fields.phone?.uiProps;
 		expect(uiProps?.mask).toBe('(000) 000-0000');
 
 		// TypeScript knows 'styles' is a UIPropValue (object)

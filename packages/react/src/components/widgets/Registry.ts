@@ -2,6 +2,7 @@ import type { ComponentType } from 'react';
 import { TextInput } from './TextInput';
 import { NumberInput } from './NumberInput';
 import { SelectInput } from './SelectInput';
+import { SectionWidget } from './SectionWidget';
 import type { FieldState, LogicValue } from '@screamform/core';
 
 /**
@@ -39,5 +40,6 @@ export const DefaultWidgets: WidgetRegistry = {
 	number: NumberInput as ComponentType<WidgetProps>,
 	select: SelectInput as ComponentType<WidgetProps>,
 	'multi-select': SelectInput as ComponentType<WidgetProps>,
+	section: SectionWidget as ComponentType<WidgetProps>,
 	// switch: BooleanInput as ComponentType<WidgetProps>,
 };

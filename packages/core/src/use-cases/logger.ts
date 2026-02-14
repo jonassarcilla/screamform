@@ -12,7 +12,7 @@ export interface LoggerOptions {
 export const createLogger = (options: LoggerOptions) => {
 	const { isDebug, prefix = 'FormEngine' } = options;
 
-	const log = (level: LogLevel, message: string, data?: any) => {
+	const log = (level: LogLevel, message: string, data?: unknown) => {
 		if (!isDebug) return;
 
 		const timestamp = new Date().toISOString();
@@ -35,9 +35,9 @@ export const createLogger = (options: LoggerOptions) => {
 	};
 
 	return {
-		info: (msg: string, data?: any) => log('info', msg, data),
-		warn: (msg: string, data?: any) => log('warn', msg, data),
-		error: (msg: string, data?: any) => log('error', msg, data),
-		debug: (msg: string, data?: any) => log('debug', msg, data),
+		info: (msg: string, data?: unknown) => log('info', msg, data),
+		warn: (msg: string, data?: unknown) => log('warn', msg, data),
+		error: (msg: string, data?: unknown) => log('error', msg, data),
+		debug: (msg: string, data?: unknown) => log('debug', msg, data),
 	};
 };

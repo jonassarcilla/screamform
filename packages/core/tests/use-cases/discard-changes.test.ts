@@ -1,4 +1,4 @@
-import { type UISchema } from '@screamform/core';
+import type { UISchema } from '@screamform/core';
 import { discardChanges } from '@screamform/core/use-cases/discard-changes';
 import { describe, test, expect } from 'bun:test';
 

@@ -26,11 +26,11 @@ export const processSubmission = (
 	// 2. Failure Path: Collect errors only from visible fields
 	if (!state.isValid) {
 		const errors: Record<string, string> = {};
-		Object.entries(state.fields).forEach(([key, field]) => {
+		for (const [key, field] of Object.entries(state.fields)) {
 			if (field.isVisible && field.error) {
 				errors[key] = field.error;
 			}
-		});
+		}
 		return { success: false, data: null, errors };
 	}
 

@@ -90,6 +90,36 @@ export interface ValidationGroup {
 	rules: Array<ValidationGroup | ValidationRule>;
 }
 
+// --- Data Classification & Compliance ---
+
+/**
+ * Data sensitivity classification for compliance (SOC 2, HIPAA, GDPR).
+ * Sections propagate their classification to children by convention.
+ */
+export type DataClassification = 'public' | 'internal' | 'confidential' | 'pii';
+
+/**
+ * Schema-level metadata for versioning, auditing, and compliance tracking.
+ */
+export interface SchemaMeta {
+	/** Schema version (e.g. '1.0.0'). Useful for SOC 2 audit trails. */
+	version?: string;
+	/** Unique identifier for this schema definition. */
+	id?: string;
+	/** Human-readable schema name. */
+	name?: string;
+	/** Description of the form this schema defines. */
+	description?: string;
+	/** ISO 8601 timestamp of when the schema was created. */
+	createdAt?: string;
+	/** ISO 8601 timestamp of the last schema modification. */
+	updatedAt?: string;
+	/** Author or team that owns this schema. */
+	author?: string;
+	/** Extensible: custom audit/compliance fields. */
+	[key: string]: unknown;
+}
+
 // --- Schema & State ---
 
 export type UIPropValue =
@@ -115,6 +145,8 @@ export interface UISchemaField {
 	autoSave?: boolean;
 	bindPath?: string;
 	multiple?: boolean;
+	/** Data classification for compliance. Sections propagate to children by convention. */
+	sensitivity?: DataClassification;
 
 	transform?: TransformKeyword;
 	template?: string;
@@ -153,6 +185,8 @@ export interface UISchemaField {
 }
 
 export interface UISchema {
+	/** Schema metadata for versioning, auditing, and compliance. */
+	meta?: SchemaMeta;
 	exclude?: string[];
 	fields: Record<string, UISchemaField>;
 	settings?: {

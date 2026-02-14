@@ -1,7 +1,7 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import { isObservable } from '@legendapp/state';
 import { useValue } from '@legendapp/state/react';
-import type { FieldState, UISchemaField } from '@screamform/core';
+import type { FieldState } from '@screamform/core';
 import type {
 	FormEngineActions,
 	FormStateSnapshot,
@@ -136,7 +136,7 @@ export function useFormMetaForField(fieldKey: string): {
 		throw new Error('useFormMetaForField must be used within a FormProvider');
 	}
 	const formVersion = useValue(() => {
-		const { formState$, formVersion$ } = context.getEngine();
+		const { formVersion$ } = context.getEngine();
 		return formVersion$.get();
 	});
 	const submitError = useValue(() => {
