@@ -52,9 +52,9 @@ export function TextInput({
 	const hasSuggestions = Boolean(autoSuggestion?.length);
 	const filteredSuggestions =
 		hasSuggestions && draft.trim() !== ''
-			? autoSuggestion?.filter((s) =>
+			? (autoSuggestion?.filter((s) =>
 					s.toLowerCase().includes(draft.trim().toLowerCase()),
-				)
+				) ?? [])
 			: hasSuggestions
 				? (autoSuggestion ?? [])
 				: [];
